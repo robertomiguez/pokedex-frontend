@@ -15,7 +15,16 @@ export const usePokemonStore = defineStore('pokemon', () => {
     const initialized = ref(false);
 
     // Getters
-    // (We will add advanced getters in the next step, but simple state access is available)
+    const caughtCount = computed(() => caughtPokemon.value.length);
+    const totalCount = computed(() => allPokemon.value.length);
+    const progress = computed(() => {
+        if (totalCount.value === 0) return 0;
+        return Math.round((caughtCount.value / totalCount.value) * 100);
+    });
+
+    const isCaught = (id: number) => computed(() =>
+        caughtPokemon.value.some(p => p.id === id)
+    );
 
     // Actions
     async function initialize() {
@@ -114,6 +123,10 @@ export const usePokemonStore = defineStore('pokemon', () => {
         initialize,
         fetchAllPokemon,
         catchPokemon,
-        releasePokemon
+        releasePokemon,
+        caughtCount,
+        totalCount,
+        progress,
+        isCaught
     };
 });

@@ -2,6 +2,8 @@
 import { computed, onMounted, ref } from 'vue';
 import { usePokemonStore } from '@/stores/pokemon';
 import PokemonGrid from '@/components/pokemon/PokemonGrid.vue';
+import PokemonList from '@/components/pokemon/PokemonList.vue';
+import PokemonTable from '@/components/pokemon/PokemonTable.vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { pokemonFilters } from '@/utils/pokemonFilters';
@@ -12,6 +14,15 @@ const store = usePokemonStore();
 const router = useRouter();
 const { allPokemon, loading, error } = storeToRefs(store);
 const { fetchAllPokemon, initialize } = store;
+
+// View Mode State
+type ViewMode = 'grid' | 'list' | 'table';
+const viewMode = ref<ViewMode>((localStorage.getItem('pokedex-view-mode') as ViewMode) || 'grid');
+
+function setViewMode(mode: ViewMode) {
+  viewMode.value = mode;
+  localStorage.setItem('pokedex-view-mode', mode);
+}
 
 // Filter & Sort State
 const searchQuery = ref('');
@@ -80,6 +91,30 @@ function handlePokemonClick(pokemon: any) {
           <option value="desc">Descending</option>
         </select>
       </div>
+
+      <div class="view-mode-group">
+        <button 
+          @click="setViewMode('grid')" 
+          :class="{ active: viewMode === 'grid' }"
+          title="Grid View"
+        >
+          Grid
+        </button>
+        <button 
+          @click="setViewMode('list')" 
+          :class="{ active: viewMode === 'list' }"
+          title="List View"
+        >
+          List
+        </button>
+        <button 
+          @click="setViewMode('table')" 
+          :class="{ active: viewMode === 'table' }"
+          title="Table View"
+        >
+          Table
+        </button>
+      </div>
     </div>
 
     <!-- Stats -->
@@ -98,6 +133,17 @@ function handlePokemonClick(pokemon: any) {
 
     <div v-else>
       <PokemonGrid 
+        v-if="viewMode === 'grid'"
+        :pokemon-list="filteredAndSortedPokemon" 
+        @click="handlePokemonClick"
+      />
+      <PokemonList 
+        v-else-if="viewMode === 'list'"
+        :pokemon-list="filteredAndSortedPokemon" 
+        @click="handlePokemonClick"
+      />
+      <PokemonTable 
+        v-else-if="viewMode === 'table'"
         :pokemon-list="filteredAndSortedPokemon" 
         @click="handlePokemonClick"
       />
@@ -144,6 +190,27 @@ function handlePokemonClick(pokemon: any) {
   background-color: white;
   font-size: 1rem;
   cursor: pointer;
+}
+
+.view-mode-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.view-mode-group button {
+  margin: 0;
+  padding: 0.5rem 0.8rem;
+  background-color: white;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.view-mode-group button.active {
+  background-color: #f0f0f0;
+  color: #333;
+  border-color: #bbb;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .results-info {

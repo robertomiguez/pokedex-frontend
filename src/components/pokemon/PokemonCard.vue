@@ -34,6 +34,7 @@ const typeColors: Record<string, string> = {
 
 const mainTypeColor = computed(() => {
   const type = props.pokemon.types[0];
+  if (!type) return '#A8A878';
   return typeColors[type] || '#A8A878';
 });
 

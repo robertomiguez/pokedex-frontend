@@ -21,12 +21,24 @@ onErrorCaptured((err) => {
 
 <template>
   <AppLayout>
-    <RouterView />
+    <RouterView v-slot="{ Component }">
+      <Transition name="fade" mode="out-in">
+        <component :is="Component" />
+      </Transition>
+    </RouterView>
     <ReloadPrompt />
     <ToastNotification />
   </AppLayout>
-
 </template>
 
-<style scoped>
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

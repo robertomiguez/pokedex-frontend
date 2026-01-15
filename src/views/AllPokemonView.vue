@@ -4,6 +4,7 @@ import { usePokemonStore } from '@/stores/pokemon';
 import PokemonGrid from '@/components/pokemon/PokemonGrid.vue';
 import PokemonList from '@/components/pokemon/PokemonList.vue';
 import PokemonTable from '@/components/pokemon/PokemonTable.vue';
+import SkeletonLoader from '@/components/ui/SkeletonLoader.vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { pokemonFilters } from '@/utils/pokemonFilters';
@@ -127,8 +128,14 @@ function handlePokemonClick(pokemon: any) {
       Showing {{ filteredAndSortedPokemon.length }} Pokémon
     </div>
 
-    <div v-if="loading && allPokemon.length === 0" class="loading-state">
-      Loading Pokémon...
+    <div v-if="loading && allPokemon.length === 0" class="loading-grid">
+      <div v-for="n in 12" :key="n" class="skeleton-card">
+         <SkeletonLoader height="150px" border-radius="12px" />
+         <div class="skeleton-text">
+           <SkeletonLoader width="60%" height="20px" />
+           <SkeletonLoader width="40%" height="15px" />
+         </div>
+      </div>
     </div>
 
     <div v-else-if="error" class="error-state">
@@ -230,6 +237,26 @@ function handlePokemonClick(pokemon: any) {
 
 .export-btn:hover {
   background-color: #45a049;
+}
+
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
 }
 
 .results-info {

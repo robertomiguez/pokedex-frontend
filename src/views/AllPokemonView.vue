@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router';
 import { pokemonFilters } from '@/utils/pokemonFilters';
 import { pokemonSorting, type SortField, type SortDirection } from '@/utils/pokemonSorting';
 import type { PokemonType } from '@/types/domain';
+import { exportPokemonToCSV } from '@/utils/csvExport';
 
 const store = usePokemonStore();
 const router = useRouter();
@@ -115,6 +116,10 @@ function handlePokemonClick(pokemon: any) {
           Table
         </button>
       </div>
+
+      <button @click="exportPokemonToCSV(filteredAndSortedPokemon)" class="export-btn">
+        Export CSV
+      </button>
     </div>
 
     <!-- Stats -->
@@ -211,6 +216,20 @@ function handlePokemonClick(pokemon: any) {
   color: #333;
   border-color: #bbb;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.export-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.export-btn:hover {
+  background-color: #45a049;
 }
 
 .results-info {

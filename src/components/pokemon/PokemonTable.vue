@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref } from 'vue';
 import { useVirtualizer } from '@tanstack/vue-virtual';
 import { usePokemonStore } from '@/stores/pokemon';
 import type { Pokemon } from '@/types/domain';

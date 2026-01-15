@@ -5,7 +5,7 @@ import PokemonCard from '@/components/pokemon/PokemonCard.vue';
 import { storeToRefs } from 'pinia';
 
 const store = usePokemonStore();
-const { caughtPokemon, loading, error, caughtCount, totalCount, progress } = storeToRefs(store);
+const { caughtPokemon, caughtCount, progress } = storeToRefs(store);
 const { initialize, releasePokemon } = store;
 
 onMounted(async () => {

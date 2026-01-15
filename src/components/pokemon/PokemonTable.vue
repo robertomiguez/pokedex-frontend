@@ -17,14 +17,14 @@ const { isCaught } = store;
 
 const parentRef = ref<HTMLElement | null>(null);
 
-const count = computed(() => props.pokemonList.length);
-
-const virtualizer = useVirtualizer({
-  count,
+const virtualizerOptions = computed(() => ({
+  count: props.pokemonList.length,
   getScrollElement: () => parentRef.value,
-  estimateSize: () => 60, // Estimated row height
+  estimateSize: () => 60,
   overscan: 5,
-});
+}));
+
+const virtualizer = useVirtualizer(virtualizerOptions);
 
 const items = computed(() => virtualizer.value.getVirtualItems());
 
@@ -78,26 +78,27 @@ function padId(id: number): string {
           height: `${virtualRow.size}px`,
           transform: `translateY(${virtualRow.start}px)`,
         }"
-        @click="emit('click', props.pokemonList[virtualRow.index])"
       >
-        <div class="col-id">{{ padId(props.pokemonList[virtualRow.index].id) }}</div>
-        <div class="col-image">
-           <img :src="props.pokemonList[virtualRow.index].imageUrl" alt="" loading="lazy"/>
-        </div>
-        <div class="col-name">{{ props.pokemonList[virtualRow.index].name }}</div>
-        <div class="col-types">
-           <span 
-              v-for="type in props.pokemonList[virtualRow.index].types" 
-              :key="type"
-              class="type-badge"
-              :style="{ backgroundColor: typeColors[type] }"
-           >
-             {{ type }}
-           </span>
-        </div>
-        <div class="col-caught">
-           <span v-if="isCaught(props.pokemonList[virtualRow.index].id).value">★</span>
-        </div>
+        <template v-if="props.pokemonList[virtualRow.index]">
+            <div class="col-id" @click="emit('click', props.pokemonList[virtualRow.index])">{{ padId(props.pokemonList[virtualRow.index].id) }}</div>
+            <div class="col-image" @click="emit('click', props.pokemonList[virtualRow.index])">
+            <img :src="props.pokemonList[virtualRow.index].imageUrl" alt="" loading="lazy"/>
+            </div>
+            <div class="col-name" @click="emit('click', props.pokemonList[virtualRow.index])">{{ props.pokemonList[virtualRow.index].name }}</div>
+            <div class="col-types" @click="emit('click', props.pokemonList[virtualRow.index])">
+            <span 
+                v-for="type in props.pokemonList[virtualRow.index].types" 
+                :key="type"
+                class="type-badge"
+                :style="{ backgroundColor: typeColors[type] }"
+            >
+                {{ type }}
+            </span>
+            </div>
+            <div class="col-caught" @click="emit('click', props.pokemonList[virtualRow.index])">
+            <span v-if="isCaught(props.pokemonList[virtualRow.index].id).value">★</span>
+            </div>
+        </template>
       </div>
     </div>
   </div>

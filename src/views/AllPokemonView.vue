@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { usePokemonStore } from '@/stores/pokemon';
-import PokemonCard from '@/components/pokemon/PokemonCard.vue';
+import PokemonGrid from '@/components/pokemon/PokemonGrid.vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { pokemonFilters } from '@/utils/pokemonFilters';
@@ -11,7 +11,7 @@ import type { PokemonType } from '@/types/domain';
 const store = usePokemonStore();
 const router = useRouter();
 const { allPokemon, loading, error } = storeToRefs(store);
-const { fetchAllPokemon, initialize, isCaught } = store;
+const { fetchAllPokemon, initialize } = store;
 
 // Filter & Sort State
 const searchQuery = ref('');
@@ -96,13 +96,10 @@ function handlePokemonClick(pokemon: any) {
       <button @click="fetchAllPokemon">Retry</button>
     </div>
 
-    <div v-else class="pokemon-grid">
-      <PokemonCard
-        v-for="pokemon in filteredAndSortedPokemon"
-        :key="pokemon.id"
-        :pokemon="pokemon"
-        :is-caught="isCaught(pokemon.id).value"
-        @click="handlePokemonClick(pokemon)"
+    <div v-else>
+      <PokemonGrid 
+        :pokemon-list="filteredAndSortedPokemon" 
+        @click="handlePokemonClick"
       />
     </div>
   </div>
@@ -153,13 +150,6 @@ function handlePokemonClick(pokemon: any) {
   margin-bottom: 1rem;
   color: #666;
   font-size: 0.9rem;
-}
-
-.pokemon-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem 0;
 }
 
 .loading-state,

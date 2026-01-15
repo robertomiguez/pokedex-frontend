@@ -3,10 +3,12 @@ import { onMounted } from 'vue';
 import { usePokemonStore } from '@/stores/pokemon';
 import PokemonCard from '@/components/pokemon/PokemonCard.vue';
 import { storeToRefs } from 'pinia';
+import { useRouter } from 'vue-router';
 
 const store = usePokemonStore();
+const router = useRouter();
 const { allPokemon, loading, error } = storeToRefs(store);
-const { fetchAllPokemon, initialize, catchPokemon, isCaught } = store;
+const { fetchAllPokemon, initialize, isCaught } = store;
 
 onMounted(async () => {
   await initialize();
@@ -14,12 +16,7 @@ onMounted(async () => {
 });
 
 function handlePokemonClick(pokemon: any) {
-  // Logic to navigate to details or catch (for now just console log or catch)
-  // For this step, let's just log. In next steps we add Detail View.
-  console.log('Clicked:', pokemon.name);
-  if (!isCaught(pokemon.id).value) {
-    catchPokemon(pokemon);
-  }
+  router.push({ name: 'pokemon-detail', params: { id: pokemon.id } });
 }
 </script>
 

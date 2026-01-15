@@ -1,19 +1,45 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
+
+const isOffline = ref(!navigator.onLine);
+
+const updateOnlineStatus = () => {
+  isOffline.value = !navigator.onLine;
+};
+
+onMounted(() => {
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('online', updateOnlineStatus);
+  window.removeEventListener('offline', updateOnlineStatus);
+});
 </script>
 
 <template>
   <div class="app-layout">
     <header class="app-header">
-      <div class="header-content">
-        <h1 class="logo">Pokédex</h1>
-        <nav class="nav">
-          <a href="/" class="nav-link">All Pokémon</a>
-          <a href="/pokedex" class="nav-link">My Pokédex</a>
+      <div class="container header-content">
+        <router-link to="/" class="brand">
+          <span class="pokeball-icon">🔴</span>
+          <h1>Pokedex<span class="highlight">Pro</span></h1>
+        </router-link>
+        
+        <nav class="main-nav">
+          <router-link to="/" class="nav-link" active-class="active">All Pokémon</router-link>
+          <router-link to="/pokedex" class="nav-link" active-class="active">My Pokedex</router-link>
         </nav>
       </div>
     </header>
-    <main class="main-content">
-      <slot />
+
+    <div v-if="isOffline" class="offline-banner">
+      You are currently offline. Using cached data.
+    </div>
+
+    <main class="main-content container">
+      <slot></slot>
     </main>
   </div>
 </template>
@@ -21,53 +47,90 @@
 <style scoped>
 .app-layout {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background-color: #f5f7fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.offline-banner {
+  background-color: #ff9800;
+  color: white;
+  text-align: center;
+  padding: 0.5rem;
+  font-weight: bold;
 }
 
 .app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: #ff3e3e;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 0.5rem 0;
 }
 
 .header-content {
-  max-width: 1200px;
-  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.logo {
+.brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
   color: white;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
+  gap: 0.5rem;
 }
 
-.nav {
+.pokeball-icon {
+  font-size: 1.8rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.highlight {
+  color: #ffcb05; /* Pokemon Yellow */
+  text-shadow: 1px 1px 0 #3b5ca8; /* Pokemon Blue */
+}
+
+.main-nav {
   display: flex;
   gap: 1.5rem;
 }
 
 .nav-link {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 20px;
+  transition: all 0.2s ease;
 }
 
 .nav-link:hover {
   color: white;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.nav-link.active {
+  color: #3b5ca8;
+  background-color: white;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .main-content {
-  flex: 1;
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
+  padding-top: 2rem;
+  padding-bottom: 3rem;
 }
 </style>

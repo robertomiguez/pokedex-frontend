@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { usePokemonStore } from '@/stores/pokemon';
 import { storeToRefs } from 'pinia';
+import type { CaughtPokemon } from '@/types/domain';
 
 const route = useRoute();
 const router = useRouter();
 const store = usePokemonStore();
-const { allPokemon, loading } = storeToRefs(store);
-const { initialize, fetchAllPokemon, catchPokemon, releasePokemon, isCaught } = store;
+const { allPokemon, loading, caughtPokemon } = storeToRefs(store);
+const { initialize, fetchAllPokemon, catchPokemon, releasePokemon, isCaught, updatePokemon } = store;
 
 const pokemonId = computed(() => Number(route.params.id));
 
@@ -17,6 +18,20 @@ const pokemon = computed(() => {
 });
 
 const isCaughtStatus = computed(() => isCaught(pokemonId.value).value);
+
+const noteText = ref('');
+
+// Load existing note if caught
+watch([pokemon, caughtPokemon], () => {
+  if (pokemon.value && isCaughtStatus.value) {
+    const caught = caughtPokemon.value.find(p => p.id === pokemon.value?.id);
+    if (caught) {
+      noteText.value = caught.notes || '';
+    }
+  } else {
+    noteText.value = '';
+  }
+}, { immediate: true });
 
 onMounted(async () => {
   await initialize();
@@ -31,10 +46,25 @@ function handleAction() {
   if (isCaughtStatus.value) {
     if (confirm(`Release ${pokemon.value.name}?`)) {
       releasePokemon(pokemon.value.id);
+      noteText.value = '';
     }
   } else {
     catchPokemon(pokemon.value);
   }
+}
+
+async function saveNote() {
+    if (!pokemon.value || !isCaughtStatus.value) return;
+    
+    // We need to construct the CaughtPokemon object. 
+    // Since we are finding it from caughtPokemon list, we can just update that reference?
+    // Or we find it in store.
+    const caught = caughtPokemon.value.find(p => p.id === pokemon.value?.id);
+    if (caught) {
+        const updated: CaughtPokemon = { ...caught, notes: noteText.value };
+        await updatePokemon(updated);
+        alert('Note saved!');
+    }
 }
 
 function goBack() {
@@ -84,7 +114,9 @@ function getTypeColor(type: string) {
           <div class="stat-row" v-for="(value, stat) in pokemon.stats" :key="stat">
             <span class="stat-name">{{ stat }}</span>
             <div class="stat-bar-container">
-                :style="{ width: Math.min((value / 255) * 100, 100) + '%', backgroundColor: getTypeColor(pokemon.types[0] || 'normal') }"
+                <div class="stat-bar"
+                     :style="{ width: Math.min((value / 255) * 100, 100) + '%', backgroundColor: getTypeColor(pokemon.types[0] || 'normal') }"
+                ></div>
             </div>
             <span class="stat-val">{{ value }}</span>
           </div>
@@ -96,6 +128,16 @@ function getTypeColor(type: string) {
              <div class="p-stat">
                <strong>Weight:</strong> {{ pokemon.weight / 10 }}kg
              </div>
+          </div>
+
+          <div class="notes-section" v-if="isCaughtStatus">
+            <h3>Trainer Notes</h3>
+            <textarea 
+              v-model="noteText" 
+              placeholder="Add some notes about this Pokémon..."
+              rows="3"
+            ></textarea>
+            <button @click="saveNote" class="save-note-btn">Save Note</button>
           </div>
         </div>
       </div>
@@ -286,5 +328,42 @@ function getTypeColor(type: string) {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
+}
+
+.notes-section {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.notes-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #444;
+}
+
+.notes-section textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 0.5rem;
+    box-sizing: border-box;
+}
+
+.save-note-btn {
+    background-color: #667eea;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.save-note-btn:hover {
+    background-color: #5a6fd6;
 }
 </style>

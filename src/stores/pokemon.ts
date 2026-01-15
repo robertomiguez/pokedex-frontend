@@ -114,6 +114,19 @@ export const usePokemonStore = defineStore('pokemon', () => {
         }
     }
 
+    async function updatePokemon(pokemon: CaughtPokemon) {
+        try {
+            await caughtPokemonRepository.save(pokemon);
+            const index = caughtPokemon.value.findIndex(p => p.id === pokemon.id);
+            if (index !== -1) {
+                caughtPokemon.value[index] = pokemon;
+            }
+        } catch (e) {
+            console.error('Failed to update pokemon:', e);
+            error.value = 'Failed to update pokemon.';
+        }
+    }
+
     return {
         allPokemon,
         caughtPokemon,
@@ -124,6 +137,7 @@ export const usePokemonStore = defineStore('pokemon', () => {
         fetchAllPokemon,
         catchPokemon,
         releasePokemon,
+        updatePokemon,
         caughtCount,
         totalCount,
         progress,

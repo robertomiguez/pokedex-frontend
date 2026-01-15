@@ -48,7 +48,12 @@ function padId(id: number): string {
 </script>
 
 <template>
-  <div class="pokemon-card" @click="emit('click')" :class="{ 'is-caught': isCaught }">
+  <div 
+    class="pokemon-card" 
+    @click="emit('click')" 
+    :class="{ 'is-caught': isCaught }"
+    :style="{ background: cardBackground }"
+  >
     <div class="card-header">
       <span class="pokemon-id">{{ padId(pokemon.id) }}</span>
       <span v-if="isCaught" class="caught-icon" title="Caught">★</span>
@@ -76,7 +81,6 @@ function padId(id: number): string {
 
 <style scoped>
 .pokemon-card {
-  background: v-bind(cardBackground);
   border-radius: 1rem;
   padding: 1rem;
   position: relative;

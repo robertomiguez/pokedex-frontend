@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useNotificationStore } from '@/stores/notifications';
 import { usePokemonStore } from '@/stores/pokemon';
 import { storeToRefs } from 'pinia';
 import type { CaughtPokemon } from '@/types/domain';
@@ -8,6 +9,7 @@ import type { CaughtPokemon } from '@/types/domain';
 const route = useRoute();
 const router = useRouter();
 const store = usePokemonStore();
+const notificationStore = useNotificationStore();
 const { allPokemon, loading, caughtPokemon } = storeToRefs(store);
 const { initialize, fetchAllPokemon, catchPokemon, releasePokemon, isCaught, updatePokemon } = store;
 
@@ -63,7 +65,11 @@ async function saveNote() {
     if (caught) {
         const updated: CaughtPokemon = { ...caught, notes: noteText.value };
         await updatePokemon(updated);
-        alert('Note saved!');
+        notificationStore.addNotification({
+            message: 'Note saved successfully!',
+            type: 'success',
+            duration: 3000
+        });
     }
 }
 

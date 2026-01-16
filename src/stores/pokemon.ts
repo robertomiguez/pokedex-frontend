@@ -79,7 +79,9 @@ export const usePokemonStore = defineStore('pokemon', () => {
             allPokemon.value = mapped;
 
             // 5. Cache
-            await pokemonRepository.saveMany(mapped);
+            // Use deep clone to avoid Proxy issues with IDB
+            const rawMapped = JSON.parse(JSON.stringify(mapped));
+            await pokemonRepository.saveMany(rawMapped);
 
         } catch (e) {
             console.error('Failed to fetch pokemon:', e);
@@ -91,8 +93,11 @@ export const usePokemonStore = defineStore('pokemon', () => {
 
     async function catchPokemon(pokemon: Pokemon) {
         try {
+            // Deep clone to ensure no Proxies (nested or otherwise) are passed to IndexedDB
+            const rawPokemon = JSON.parse(JSON.stringify(pokemon));
+
             const caught: CaughtPokemon = {
-                ...pokemon,
+                ...rawPokemon,
                 caughtAt: Date.now(),
             };
 
@@ -116,10 +121,13 @@ export const usePokemonStore = defineStore('pokemon', () => {
 
     async function updatePokemon(pokemon: CaughtPokemon) {
         try {
-            await caughtPokemonRepository.save(pokemon);
+            // Deep clone to ensure no Proxies are passed to IndexedDB
+            const rawPokemon = JSON.parse(JSON.stringify(pokemon));
+            await caughtPokemonRepository.save(rawPokemon);
+
             const index = caughtPokemon.value.findIndex(p => p.id === pokemon.id);
             if (index !== -1) {
-                caughtPokemon.value[index] = pokemon;
+                caughtPokemon.value[index] = rawPokemon;
             }
         } catch (e) {
             console.error('Failed to update pokemon:', e);

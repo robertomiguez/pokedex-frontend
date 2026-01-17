@@ -96,9 +96,28 @@ function padId(id: number): string {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* styling for caught state: target content parts except the star */
+.is-caught .pokemon-image,
+.is-caught .card-info,
+.is-caught .pokemon-id {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
 .is-caught {
-  border-color: #FFD700;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+  /* Optional: make background grayish if needed, or rely on content grayscale? 
+     Title said "greyishh". 
+     If I don't filter root, background gradient is still colored.
+     I should probably make background grey too.
+  */
+  background: #f0f0f0 !important;
+  cursor: default; /* "cannot select it" */
+}
+
+.is-caught:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: transparent;
 }
 
 .card-header {

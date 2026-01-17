@@ -4,10 +4,12 @@ import type { Pokemon } from '@/types/domain';
 
 defineProps<{
   pokemonList: Pokemon[];
+  selectedIds?: Set<number>;
 }>();
 
 const emit = defineEmits<{
-  (e: 'click', pokemon: Pokemon): void;
+  (e: 'click', event: MouseEvent, pokemon: Pokemon): void;
+  (e: 'contextmenu', event: MouseEvent, pokemon: Pokemon): void;
 }>();
 
 const store = usePokemonStore();
@@ -32,7 +34,9 @@ function padId(id: number): string {
       v-for="pokemon in pokemonList"
       :key="pokemon.id"
       class="pokemon-list-item"
-      @click="emit('click', pokemon)"
+      :class="{ 'selected': selectedIds?.has(pokemon.id) }"
+      @click="emit('click', $event, pokemon)"
+      @contextmenu.prevent="emit('contextmenu', $event, pokemon)"
     >
       <div class="item-left">
         <img :src="pokemon.imageUrl" :alt="pokemon.name" loading="lazy" />
@@ -75,11 +79,27 @@ function padId(id: number): string {
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
+  position: relative;
+  overflow: hidden;
 }
 
 .pokemon-list-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+}
+
+.pokemon-list-item.selected::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(102, 126, 234, 0.4); 
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 5;
 }
 
 .item-left {

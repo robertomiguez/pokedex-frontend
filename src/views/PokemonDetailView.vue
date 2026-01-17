@@ -6,14 +6,14 @@ import { usePokemonStore } from '@/stores/pokemon';
 import { storeToRefs } from 'pinia';
 import type { CaughtPokemon } from '@/types/domain';
 
-import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
+import NoteModal from '@/components/ui/NoteModal.vue';
 
 const route = useRoute();
 const router = useRouter();
 const store = usePokemonStore();
 const notificationStore = useNotificationStore();
 const { allPokemon, loading, caughtPokemon } = storeToRefs(store);
-const { initialize, fetchAllPokemon, catchPokemon, releasePokemon, isCaught, updatePokemon } = store;
+const { initialize, fetchAllPokemon, catchPokemon, isCaught, updatePokemon } = store;
 
 const pokemonId = computed(() => Number(route.params.id));
 
@@ -23,10 +23,9 @@ const pokemon = computed(() => {
 
 const isCaughtStatus = computed(() => isCaught(pokemonId.value));
 
-const noteText = ref('');
-const showConfirmModal = ref(false);
+const showNoteModal = ref(false);
 
-// Get caught Pokemon data for date display
+// Get caught Pokemon data for date display & notes
 const caughtData = computed(() => {
   if (!isCaughtStatus.value) return null;
   return caughtPokemon.value.find(p => p.id === pokemonId.value);
@@ -42,17 +41,9 @@ const caughtDateFormatted = computed(() => {
   });
 });
 
-// Load existing note if caught
-watch([pokemon, caughtPokemon], () => {
-  if (pokemon.value && isCaughtStatus.value) {
-    const caught = caughtPokemon.value.find(p => p.id === pokemon.value?.id);
-    if (caught) {
-      noteText.value = caught.notes || '';
-    }
-  } else {
-    noteText.value = '';
-  }
-}, { immediate: true });
+const currentNote = computed(() => {
+    return caughtData.value?.notes || '';
+});
 
 onMounted(async () => {
   await initialize();
@@ -63,10 +54,8 @@ onMounted(async () => {
 
 function handleAction() {
   if (!pokemon.value) return;
-  
-  if (isCaughtStatus.value) {
-    showConfirmModal.value = true;
-  } else {
+  // Safety check, though button is hidden if caught
+  if (!isCaughtStatus.value) {
     catchPokemon(pokemon.value);
     notificationStore.addNotification({
         message: `You caught ${pokemon.value.name}!`,
@@ -76,28 +65,16 @@ function handleAction() {
   }
 }
 
-function confirmRelease() {
-    if (pokemon.value) {
-        releasePokemon(pokemon.value.id);
-        noteText.value = '';
-        showConfirmModal.value = false;
-        notificationStore.addNotification({
-            message: `${pokemon.value.name} was released.`,
-            type: 'info',
-            duration: 3000
-        });
-    }
+function openNoteModal() {
+    showNoteModal.value = true;
 }
 
-async function saveNote() {
+async function saveNote(note: string) {
     if (!pokemon.value || !isCaughtStatus.value) return;
     
-    // We need to construct the CaughtPokemon object. 
-    // Since we are finding it from caughtPokemon list, we can just update that reference?
-    // Or we find it in store.
     const caught = caughtPokemon.value.find(p => p.id === pokemon.value?.id);
     if (caught) {
-        const updated: CaughtPokemon = { ...caught, notes: noteText.value };
+        const updated: CaughtPokemon = { ...caught, notes: note };
         await updatePokemon(updated);
         notificationStore.addNotification({
             message: 'Note saved successfully!',
@@ -105,6 +82,7 @@ async function saveNote() {
             duration: 3000
         });
     }
+    showNoteModal.value = false;
 }
 
 function goBack() {
@@ -176,25 +154,30 @@ function getTypeColor(type: string) {
                </div>
             </div>
 
+            <!-- Read-only Notes Section -->
             <div class="notes-section" v-if="isCaughtStatus">
-              <h3>Trainer Notes</h3>
-              <textarea 
-                v-model="noteText" 
-                placeholder="Add some notes about this Pokémon..."
-                rows="3"
-              ></textarea>
-              <button @click="saveNote" class="save-note-btn">Save Note</button>
+              <div class="notes-header">
+                <h3>Trainer Notes</h3>
+                <button @click="openNoteModal" class="edit-note-btn">
+                  {{ currentNote ? 'Edit Notes' : 'Add Trainer Notes' }}
+                </button>
+              </div>
+              <div v-if="currentNote" class="notes-content">
+                {{ currentNote }}
+              </div>
+              <div v-else class="notes-empty">
+                No notes added yet.
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="actions">
+        <div class="actions" v-if="!isCaughtStatus">
           <button 
-            class="action-button" 
-            :class="{ 'release': isCaughtStatus, 'catch': !isCaughtStatus }"
+            class="action-button catch" 
             @click="handleAction"
           >
-            {{ isCaughtStatus ? 'Release' : 'Catch!' }}
+            Catch!
           </button>
         </div>
       </div>
@@ -209,14 +192,12 @@ function getTypeColor(type: string) {
       <button @click="goBack">Go Back</button>
     </div>
 
-    <ConfirmationModal
-      :show="showConfirmModal"
-      title="Release Pokémon"
-      :message="`Are you sure you want to release ${pokemon?.name}?`"
-      confirm-text="Release"
-      type="danger"
-      @confirm="confirmRelease"
-      @cancel="showConfirmModal = false"
+    <NoteModal
+      :show="showNoteModal"
+      :pokemon-name="pokemon?.name"
+      :initial-note="currentNote"
+      @save="saveNote"
+      @close="showNoteModal = false"
     />
   </div>
 </template>
@@ -368,6 +349,57 @@ function getTypeColor(type: string) {
   color: #2c3e50;
 }
 
+.notes-section {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+
+.notes-section h3 {
+    font-size: 1.2rem;
+    margin: 0;
+    color: #444;
+}
+
+.edit-note-btn {
+    background: transparent;
+    color: #667eea;
+    border: 1px solid #667eea;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.edit-note-btn:hover {
+    background: #667eea;
+    color: white;
+}
+
+.notes-content {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    color: #555;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    border-left: 3px solid #667eea;
+}
+
+.notes-empty {
+    color: #999;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
 .actions {
   display: flex;
   justify-content: center;
@@ -412,40 +444,4 @@ function getTypeColor(type: string) {
   }
 }
 
-.notes-section {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #eee;
-}
-
-.notes-section h3 {
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
-    color: #444;
-}
-
-.notes-section textarea {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-family: inherit;
-    resize: vertical;
-    margin-bottom: 0.5rem;
-    box-sizing: border-box;
-}
-
-.save-note-btn {
-    background-color: #667eea;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.save-note-btn:hover {
-    background-color: #5a6fd6;
-}
 </style>

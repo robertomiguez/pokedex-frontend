@@ -96,7 +96,7 @@ function padId(id: number): string {
             </span>
             </div>
             <div class="col-caught" @click="emit('click', props.pokemonList[virtualRow.index])">
-            <span v-if="isCaught(props.pokemonList[virtualRow.index].id).value">★</span>
+            <span v-if="isCaught(props.pokemonList[virtualRow.index].id)">★</span>
             </div>
         </template>
       </div>

@@ -3,13 +3,32 @@ import type { Pokemon } from '@/types/domain';
 export function exportPokemonToCSV(pokemonList: Pokemon[]) {
     if (pokemonList.length === 0) return;
 
-    const headers = ['ID', 'Name', 'Types', 'Height', 'Weight'];
+    const headers = [
+        'ID',
+        'Name',
+        'Types',
+        'HP',
+        'Attack',
+        'Defense',
+        'Special Attack',
+        'Special Defense',
+        'Speed',
+        'Height (m)',
+        'Weight (kg)'
+    ];
+
     const rows = pokemonList.map(p => [
         p.id,
         p.name,
-        p.types.join(';'),
-        p.stats.height,
-        p.stats.weight
+        `"${p.types.join(', ')}"`,
+        p.stats.hp,
+        p.stats.attack,
+        p.stats.defense,
+        p.stats.specialAttack,
+        p.stats.specialDefense,
+        p.stats.speed,
+        (p.height / 10).toFixed(1),
+        (p.weight / 10).toFixed(1)
     ]);
 
     const csvContent = [

@@ -1,21 +1,44 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { usePokemonStore } from '@/stores/pokemon';
+import { useNotificationStore } from '@/stores/notifications';
 import PokemonCard from '@/components/pokemon/PokemonCard.vue';
+import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import { storeToRefs } from 'pinia';
 
 const store = usePokemonStore();
+const notificationStore = useNotificationStore();
 const { caughtPokemon, caughtCount, progress } = storeToRefs(store);
 const { initialize, releasePokemon } = store;
+
+const showConfirmModal = ref(false);
+const pokemonToRelease = ref<{id: number, name: string} | null>(null);
 
 onMounted(async () => {
   await initialize();
 });
 
 function handleRelease(id: number, name: string) {
-  if (confirm(`Are you sure you want to release ${name}?`)) {
-    releasePokemon(id);
-  }
+  pokemonToRelease.value = { id, name };
+  showConfirmModal.value = true;
+}
+
+function confirmRelease() {
+    if (pokemonToRelease.value) {
+        releasePokemon(pokemonToRelease.value.id);
+        notificationStore.addNotification({
+            message: `${pokemonToRelease.value.name} was released.`,
+            type: 'info',
+            duration: 3000
+        });
+        showConfirmModal.value = false;
+        pokemonToRelease.value = null;
+    }
+}
+
+function cancelRelease() {
+    showConfirmModal.value = false;
+    pokemonToRelease.value = null;
 }
 </script>
 
@@ -46,6 +69,16 @@ function handleRelease(id: number, name: string) {
         @click="handleRelease(pokemon.id, pokemon.name)"
       />
     </div>
+
+    <ConfirmationModal
+        :show="showConfirmModal"
+        title="Release Pokémon"
+        :message="`Are you sure you want to release ${pokemonToRelease?.name}?`"
+        confirm-text="Release"
+        type="danger"
+        @confirm="confirmRelease"
+        @cancel="cancelRelease"
+    />
   </div>
 </template>
 

@@ -4,16 +4,21 @@ import { usePokemonStore } from '@/stores/pokemon';
 import { useNotificationStore } from '@/stores/notifications';
 import PokemonCard from '@/components/pokemon/PokemonCard.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
+import NoteModal from '@/components/ui/NoteModal.vue';
 import { storeToRefs } from 'pinia';
 
 const store = usePokemonStore();
 const notificationStore = useNotificationStore();
 const { caughtPokemon, caughtCount, progress } = storeToRefs(store);
-const { initialize, releasePokemon } = store;
+const { initialize, releasePokemon, updatePokemon } = store;
 
 // Single release state
 const showConfirmModal = ref(false);
 const pokemonToRelease = ref<{id: number, name: string} | null>(null);
+
+// Note state
+const showNoteModal = ref(false);
+const pokemonForNote = ref<{id: number, name: string, notes?: string} | null>(null);
 
 // Bulk release state
 const selectMode = ref(false);
@@ -38,6 +43,15 @@ const contextMenuText = computed(() => {
         if (p) return `Release ${p.name}`;
     }
     return 'Release';
+});
+
+// Helper to get currently selected single pokemon (for context menu)
+const singleSelectedPokemon = computed(() => {
+  if (selectedCount.value === 1) {
+    const id = Array.from(selectedIds.value)[0];
+    return caughtPokemon.value.find(p => p.id === id);
+  }
+  return null;
 });
 
 onMounted(async () => {
@@ -70,18 +84,12 @@ function handleCardClick(event: MouseEvent, id: number, name: string) {
   if (event.ctrlKey || event.metaKey) {
     toggleSelection(id);
   } else {
-    if (selectMode.value) {
-        // In select mode, clicking usually selects/deselects or resets selection
-        // Standard behavior: Click without Ctrl clears other selections and selects this one
-        selectedIds.value.clear();
-        selectedIds.value.add(id);
-        selectedIds.value = new Set(selectedIds.value);
-    } else {
-      // Single release flow - keeps existing behavior for normal clicks
-      pokemonToRelease.value = { id, name };
-      showConfirmModal.value = true;
-    }
-    selectMode.value = selectedIds.value.size > 0;
+    // Normal click now JUST selects (or clears and selects)
+    // Removed the "else -> Single release" logic
+    selectedIds.value.clear();
+    selectedIds.value.add(id);
+    selectedIds.value = new Set(selectedIds.value);
+    selectMode.value = true;
   }
 }
 
@@ -111,9 +119,48 @@ function initiateRelease() {
   closeContextMenu();
 }
 
+function initiateEditNote() {
+    const p = singleSelectedPokemon.value;
+    if (p) {
+        pokemonForNote.value = {
+            id: p.id,
+            name: p.name,
+            notes: p.notes
+        };
+        showNoteModal.value = true;
+    }
+    closeContextMenu();
+}
+
+async function saveNote(note: string) {
+    if (pokemonForNote.value) {
+        const id = pokemonForNote.value.id;
+        const p = caughtPokemon.value.find(p => p.id === id);
+        
+        if (p) {
+            // Update the object
+            const updated = { ...p, notes: note };
+            await updatePokemon(updated);
+            
+            notificationStore.addNotification({
+                message: note ? `Note for ${p.name} saved successfully.` : `Note for ${p.name} removed.`,
+                type: 'success',
+                duration: 2000
+            });
+        }
+    }
+    showNoteModal.value = false;
+    pokemonForNote.value = null;
+}
+
+function closeNoteModal() {
+    showNoteModal.value = false;
+    pokemonForNote.value = null;
+}
+
 function confirmRelease() {
-  if (selectMode.value && selectedCount.value > 0) {
-    // Bulk release
+  if (selectedCount.value > 0) {
+    // Bulk release (logic works for single selection too)
     const count = selectedCount.value;
     selectedIds.value.forEach(id => releasePokemon(id));
     notificationStore.addNotification({
@@ -123,35 +170,21 @@ function confirmRelease() {
     });
     selectedIds.value.clear();
     selectMode.value = false;
-  } else if (pokemonToRelease.value) {
-    // Single release via normal click
-    releasePokemon(pokemonToRelease.value.id);
-    notificationStore.addNotification({
-      message: `${pokemonToRelease.value.name} was released.`,
-      type: 'info',
-      duration: 3000
-    });
-    pokemonToRelease.value = null;
   }
   showConfirmModal.value = false;
 }
 
 function cancelRelease() {
   showConfirmModal.value = false;
-  pokemonToRelease.value = null;
 }
 
 const confirmModalMessage = computed(() => {
-  if (selectMode.value && selectedCount.value > 0) {
-    if (selectedCount.value === 1) {
-       // Try to get name for nicer message
-       const id = Array.from(selectedIds.value)[0];
-       const p = caughtPokemon.value.find(p => p.id === id);
-       return `Are you sure you want to release ${p ? p.name : 'this Pokémon'}?`;
-    }
-    return `Are you sure you want to release ${selectedCount.value} Pokémon?`;
+  if (selectedCount.value === 1) {
+      const id = Array.from(selectedIds.value)[0];
+      const p = caughtPokemon.value.find(p => p.id === id);
+      return `Are you sure you want to release ${p ? p.name : 'this Pokémon'}?`;
   }
-  return `Are you sure you want to release ${pokemonToRelease.value?.name}?`;
+  return `Are you sure you want to release ${selectedCount.value} Pokémon?`;
 });
 </script>
 
@@ -186,6 +219,8 @@ const confirmModalMessage = computed(() => {
           :is-caught="true"
           @click="handleCardClick($event, pokemon.id, pokemon.name)"
         />
+        <!-- Note Indicator if note exists -->
+        <div v-if="pokemon.notes" class="note-indicator" title="Has Notes">📝</div>
       </div>
     </div>
 
@@ -196,8 +231,19 @@ const confirmModalMessage = computed(() => {
       :style="{ top: `${contextMenuPosition.y}px`, left: `${contextMenuPosition.x}px` }"
       @click.stop
     >
+      <!-- Option for Note (Only if single selection) -->
+      <div 
+        v-if="selectedCount === 1" 
+        class="menu-item" 
+        @click="initiateEditNote"
+      >
+        <span class="icon">📝</span> Add/Edit Note
+      </div>
+      
+      <div class="menu-divider" v-if="selectedCount === 1"></div>
+
       <div class="menu-item delete" @click="initiateRelease">
-        <span class="icon">�</span> {{ contextMenuText }}
+        <span class="icon">👋</span> {{ contextMenuText }}
       </div>
     </div>
 
@@ -209,6 +255,14 @@ const confirmModalMessage = computed(() => {
         type="danger"
         @confirm="confirmRelease"
         @cancel="cancelRelease"
+    />
+
+    <NoteModal
+      :show="showNoteModal"
+      :pokemon-name="pokemonForNote?.name"
+      :initial-note="pokemonForNote?.notes"
+      @save="saveNote"
+      @close="closeNoteModal"
     />
   </div>
 </template>
@@ -304,6 +358,23 @@ const confirmModalMessage = computed(() => {
   z-index: 5;
 }
 
+.note-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 2;
+  cursor: help;
+}
+
 /* Context Menu Styles */
 .context-menu {
   position: fixed;
@@ -338,5 +409,11 @@ const confirmModalMessage = computed(() => {
 .menu-item .icon {
   font-size: 1.1rem;
   margin-right: 0.5rem;
+}
+
+.menu-divider {
+  height: 1px;
+  background-color: #eee;
+  margin: 0.25rem 0;
 }
 </style>

@@ -8,7 +8,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'click'): void;
+  (e: 'click', event: MouseEvent): void;
 }>();
 
 const typeColors: Record<string, string> = {
@@ -50,7 +50,7 @@ function padId(id: number): string {
 <template>
   <div 
     class="pokemon-card" 
-    @click="emit('click')" 
+    @click="emit('click', $event)" 
     :class="{ 'is-caught': isCaught }"
     :style="{ background: cardBackground }"
   >

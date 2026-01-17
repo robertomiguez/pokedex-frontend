@@ -6,6 +6,8 @@ import { usePokemonStore } from '@/stores/pokemon';
 import { storeToRefs } from 'pinia';
 import type { CaughtPokemon } from '@/types/domain';
 
+import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
+
 const route = useRoute();
 const router = useRouter();
 const store = usePokemonStore();
@@ -22,6 +24,7 @@ const pokemon = computed(() => {
 const isCaughtStatus = computed(() => isCaught(pokemonId.value).value);
 
 const noteText = ref('');
+const showConfirmModal = ref(false);
 
 // Load existing note if caught
 watch([pokemon, caughtPokemon], () => {
@@ -46,13 +49,28 @@ function handleAction() {
   if (!pokemon.value) return;
   
   if (isCaughtStatus.value) {
-    if (confirm(`Release ${pokemon.value.name}?`)) {
-      releasePokemon(pokemon.value.id);
-      noteText.value = '';
-    }
+    showConfirmModal.value = true;
   } else {
     catchPokemon(pokemon.value);
+    notificationStore.addNotification({
+        message: `You caught ${pokemon.value.name}!`,
+        type: 'success',
+        duration: 3000
+    });
   }
+}
+
+function confirmRelease() {
+    if (pokemon.value) {
+        releasePokemon(pokemon.value.id);
+        noteText.value = '';
+        showConfirmModal.value = false;
+        notificationStore.addNotification({
+            message: `${pokemon.value.name} was released.`,
+            type: 'info',
+            duration: 3000
+        });
+    }
 }
 
 async function saveNote() {
@@ -168,6 +186,16 @@ function getTypeColor(type: string) {
     Pokémon not found.
     <button @click="goBack">Go Back</button>
   </div>
+
+  <ConfirmationModal
+    :show="showConfirmModal"
+    title="Release Pokémon"
+    :message="`Are you sure you want to release ${pokemon?.name}?`"
+    confirm-text="Release"
+    type="danger"
+    @confirm="confirmRelease"
+    @cancel="showConfirmModal = false"
+  />
 </template>
 
 <style scoped>

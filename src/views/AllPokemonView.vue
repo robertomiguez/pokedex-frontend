@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { usePokemonStore } from '@/stores/pokemon';
 import PokemonGrid from '@/components/pokemon/PokemonGrid.vue';
 import PokemonList from '@/components/pokemon/PokemonList.vue';
@@ -9,13 +9,15 @@ import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { pokemonFilters } from '@/utils/pokemonFilters';
 import { pokemonSorting, type SortField, type SortDirection } from '@/utils/pokemonSorting';
-import type { PokemonType } from '@/types/domain';
+import type { PokemonType, Pokemon } from '@/types/domain';
 import { exportPokemonToCSV } from '@/utils/csvExport';
+import { useNotificationStore } from '@/stores/notifications';
 
 const store = usePokemonStore();
 const router = useRouter();
+const notificationStore = useNotificationStore();
 const { allPokemon, loading, error } = storeToRefs(store);
-const { fetchAllPokemon, initialize } = store;
+const { fetchAllPokemon, initialize, catchPokemon, releasePokemon, isCaught } = store;
 
 // View Mode State
 type ViewMode = 'grid' | 'list' | 'table';
@@ -53,14 +55,103 @@ const filteredAndSortedPokemon = computed(() => {
   return result;
 });
 
+// Selection & Bulk Catch State
+const selectedIds = ref<Set<number>>(new Set());
+const contextMenuVisible = ref(false);
+const contextMenuPosition = ref({ x: 0, y: 0 });
+
+const selectedCount = computed(() => selectedIds.value.size);
+
+// Simplified: We only care if we have selected items, which by definition must be uncaught
+const hasSelection = computed(() => selectedCount.value > 0);
+
+const contextMenuText = computed(() => {
+    if (selectedCount.value === 1) {
+        const id = Array.from(selectedIds.value)[0];
+        const p = allPokemon.value.find(p => p.id === id);
+        if (!p) return '';
+        // Always "Catch" because we can't select caught ones
+        return `Catch ${p.name}`;
+    }
+    
+    if (selectedCount.value > 1) {
+        return `Catch ${selectedCount.value} Pokemon`;
+    }
+    
+    return '';
+});
+
 onMounted(async () => {
   await initialize();
   await fetchAllPokemon();
+  document.addEventListener('click', closeContextMenu);
 });
 
-function handlePokemonClick(pokemon: any) {
-  router.push({ name: 'pokemon-detail', params: { id: pokemon.id } });
+onUnmounted(() => {
+  document.removeEventListener('click', closeContextMenu);
+});
+
+function handlePokemonClick(_event: MouseEvent | any, pokemon: Pokemon) {
+  if (contextMenuVisible.value) closeContextMenu();
+
+  // Prevent selecting caught pokemon
+  if (isCaught(pokemon.id)) return;
+
+  // Pure Selection Logic - Toggle
+  if (selectedIds.value.has(pokemon.id)) {
+      selectedIds.value.delete(pokemon.id);
+  } else {
+      selectedIds.value.add(pokemon.id);
+  }
+  selectedIds.value = new Set(selectedIds.value); // Trigger reactivity
 }
+
+function handleRightClick(event: MouseEvent, pokemon: Pokemon) {
+    // Prevent context menu for caught pokemon
+    if (isCaught(pokemon.id)) return;
+
+    if (!selectedIds.value.has(pokemon.id)) {
+        selectedIds.value.clear();
+        selectedIds.value.add(pokemon.id);
+        selectedIds.value = new Set(selectedIds.value);
+    }
+    contextMenuPosition.value = { x: event.clientX, y: event.clientY };
+    contextMenuVisible.value = true;
+}
+
+function closeContextMenu() {
+    contextMenuVisible.value = false;
+}
+
+async function handleContextAction() {
+    const ids = Array.from(selectedIds.value);
+    
+    // Single Pokemon Logic -> Navigate to Detail (User wants "Catch" button in detail)
+    if (ids.length === 1) {
+        const id = ids[0];
+        // Just navigate
+        router.push({ name: 'pokemon-detail', params: { id } });
+    } 
+    // Bulk Logic -> Catch Immediately
+    else if (ids.length > 1) {
+        let count = 0;
+        for (const id of ids) {
+            const p = allPokemon.value.find(poke => poke.id === id);
+            if (p && !isCaught(id)) {
+                await catchPokemon(p);
+                count++;
+            }
+        }
+        notificationStore.addNotification({ 
+            message: `Captured ${count} Pokemon!`, 
+            type: 'success', 
+            duration: 3000 
+        });
+    }
+
+    selectedIds.value.clear();
+    closeContextMenu();
+} 
 </script>
 
 <template>
@@ -147,18 +238,39 @@ function handlePokemonClick(pokemon: any) {
       <PokemonGrid 
         v-if="viewMode === 'grid' || !['list', 'table'].includes(viewMode)"
         :pokemon-list="filteredAndSortedPokemon" 
+        :selected-ids="selectedIds"
         @click="handlePokemonClick"
+        @contextmenu="handleRightClick"
       />
       <PokemonList 
         v-else-if="viewMode === 'list'"
         :pokemon-list="filteredAndSortedPokemon" 
+        :selected-ids="selectedIds"
         @click="handlePokemonClick"
+        @contextmenu="handleRightClick"
       />
+      <!-- PokemonTable not supporting selection/context yet, default click behavior there might just pass pokemon -->
       <PokemonTable 
         v-else-if="viewMode === 'table'"
         :pokemon-list="filteredAndSortedPokemon" 
-        @click="handlePokemonClick"
+        @click="(p) => handlePokemonClick(null, p)" 
       />
+    </div>
+
+    <!-- Context Menu -->
+    <div 
+      v-if="contextMenuVisible" 
+      class="context-menu" 
+      :style="{ top: `${contextMenuPosition.y}px`, left: `${contextMenuPosition.x}px` }"
+      @click.stop
+    >
+      <div 
+        class="menu-item catch" 
+        @click="handleContextAction"
+      >
+         <span class="icon">🔴</span> 
+         {{ contextMenuText }}
+      </div>
     </div>
   </div>
 </template>
@@ -285,5 +397,51 @@ button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+/* Context Menu Styles */
+.context-menu {
+  position: fixed;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 0.5rem 0;
+  z-index: 1000;
+  min-width: 180px;
+  border: 1px solid #eee;
+}
+
+.menu-item {
+  padding: 0.8rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.menu-item:hover {
+  background-color: #f8f9fa;
+}
+
+.menu-item.catch {
+  color: #ff6b6b;
+}
+
+.menu-item.release {
+  color: #6c757d;
+}
+
+.menu-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.menu-item .icon {
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
 }
 </style>

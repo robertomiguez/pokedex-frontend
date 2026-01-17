@@ -111,7 +111,8 @@ function padId(id: number): string {
 .pokemon-id {
   font-family: monospace;
   font-weight: 700;
-  opacity: 0.6;
+  color: #333;
+  opacity: 0.8;
 }
 
 .caught-icon {
@@ -143,6 +144,8 @@ function padId(id: number): string {
   font-size: 1.2rem;
   text-align: center;
   font-weight: 600;
+  color: #1a1a2e;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.5);
 }
 
 .types {

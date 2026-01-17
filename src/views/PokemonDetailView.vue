@@ -26,6 +26,22 @@ const isCaughtStatus = computed(() => isCaught(pokemonId.value));
 const noteText = ref('');
 const showConfirmModal = ref(false);
 
+// Get caught Pokemon data for date display
+const caughtData = computed(() => {
+  if (!isCaughtStatus.value) return null;
+  return caughtPokemon.value.find(p => p.id === pokemonId.value);
+});
+
+const caughtDateFormatted = computed(() => {
+  if (!caughtData.value) return null;
+  const date = new Date(caughtData.value.caughtAt);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+});
+
 // Load existing note if caught
 watch([pokemon, caughtPokemon], () => {
   if (pokemon.value && isCaughtStatus.value) {
@@ -117,6 +133,11 @@ function getTypeColor(type: string) {
         <div class="header">
           <h1>{{ pokemon.name }}</h1>
           <span class="id">#{{ pokemon.id.toString().padStart(3, '0') }}</span>
+        </div>
+
+        <div class="caught-info" v-if="isCaughtStatus">
+          <span class="caught-star">★</span>
+          <span class="caught-text">Caught on {{ caughtDateFormatted }}</span>
         </div>
 
         <div class="content-split">
@@ -234,12 +255,35 @@ function getTypeColor(type: string) {
 .header h1 {
   margin: 0;
   font-size: 2.5rem;
+  color: #2c3e50;
 }
 
 .id {
   font-size: 1.5rem;
   color: #aaa;
   font-weight: 700;
+}
+
+.caught-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid #ffc107;
+}
+
+.caught-star {
+  color: #FFD700;
+  font-size: 1.3rem;
+}
+
+.caught-text {
+  color: #856404;
+  font-weight: 500;
+  font-size: 0.95rem;
 }
 
 .content-split {
@@ -312,6 +356,7 @@ function getTypeColor(type: string) {
   width: 30px;
   text-align: right;
   font-weight: 700;
+  color: #2c3e50;
 }
 
 .physical-stats {
@@ -320,6 +365,7 @@ function getTypeColor(type: string) {
   gap: 2rem;
   padding-top: 1rem;
   border-top: 1px solid #eee;
+  color: #2c3e50;
 }
 
 .actions {

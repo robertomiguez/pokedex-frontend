@@ -21,7 +21,7 @@ const pokemon = computed(() => {
   return allPokemon.value.find(p => p.id === pokemonId.value);
 });
 
-const isCaughtStatus = computed(() => isCaught(pokemonId.value).value);
+const isCaughtStatus = computed(() => isCaught(pokemonId.value));
 
 const noteText = ref('');
 const showConfirmModal = ref(false);
@@ -109,93 +109,95 @@ function getTypeColor(type: string) {
 </script>
 
 <template>
-  <div class="pokemon-detail-view" v-if="pokemon">
-    <button class="back-button" @click="goBack">← Back</button>
-    
-    <div class="detail-card">
-      <div class="header">
-        <h1>{{ pokemon.name }}</h1>
-        <span class="id">#{{ pokemon.id.toString().padStart(3, '0') }}</span>
-      </div>
-
-      <div class="content-split">
-        <div class="image-section">
-          <img :src="pokemon.imageUrl" :alt="pokemon.name" />
-          <div class="types">
-            <span 
-              v-for="type in pokemon.types" 
-              :key="type"
-              class="type-badge"
-              :style="{ backgroundColor: getTypeColor(type) }"
-            >
-              {{ type }}
-            </span>
-          </div>
+  <div class="pokemon-detail-wrapper">
+    <div class="pokemon-detail-view" v-if="pokemon">
+      <button class="back-button" @click="goBack">← Back</button>
+      
+      <div class="detail-card">
+        <div class="header">
+          <h1>{{ pokemon.name }}</h1>
+          <span class="id">#{{ pokemon.id.toString().padStart(3, '0') }}</span>
         </div>
 
-        <div class="stats-section">
-          <h2>Stats</h2>
-          <div class="stat-row" v-for="(value, stat) in pokemon.stats" :key="stat">
-            <span class="stat-name">{{ stat }}</span>
-            <div class="stat-bar-container">
-                <div class="stat-bar"
-                     :style="{ width: Math.min((value / 255) * 100, 100) + '%', backgroundColor: getTypeColor(pokemon.types[0] || 'normal') }"
-                ></div>
+        <div class="content-split">
+          <div class="image-section">
+            <img :src="pokemon.imageUrl" :alt="pokemon.name" />
+            <div class="types">
+              <span 
+                v-for="type in pokemon.types" 
+                :key="type"
+                class="type-badge"
+                :style="{ backgroundColor: getTypeColor(type) }"
+              >
+                {{ type }}
+              </span>
             </div>
-            <span class="stat-val">{{ value }}</span>
-          </div>
-          
-          <div class="physical-stats">
-             <div class="p-stat">
-               <strong>Height:</strong> {{ pokemon.height / 10 }}m
-             </div>
-             <div class="p-stat">
-               <strong>Weight:</strong> {{ pokemon.weight / 10 }}kg
-             </div>
           </div>
 
-          <div class="notes-section" v-if="isCaughtStatus">
-            <h3>Trainer Notes</h3>
-            <textarea 
-              v-model="noteText" 
-              placeholder="Add some notes about this Pokémon..."
-              rows="3"
-            ></textarea>
-            <button @click="saveNote" class="save-note-btn">Save Note</button>
+          <div class="stats-section">
+            <h2>Stats</h2>
+            <div class="stat-row" v-for="(value, stat) in pokemon.stats" :key="stat">
+              <span class="stat-name">{{ stat }}</span>
+              <div class="stat-bar-container">
+                  <div class="stat-bar"
+                       :style="{ width: Math.min((value / 255) * 100, 100) + '%', backgroundColor: getTypeColor(pokemon.types[0] || 'normal') }"
+                  ></div>
+              </div>
+              <span class="stat-val">{{ value }}</span>
+            </div>
+            
+            <div class="physical-stats">
+               <div class="p-stat">
+                 <strong>Height:</strong> {{ pokemon.height / 10 }}m
+               </div>
+               <div class="p-stat">
+                 <strong>Weight:</strong> {{ pokemon.weight / 10 }}kg
+               </div>
+            </div>
+
+            <div class="notes-section" v-if="isCaughtStatus">
+              <h3>Trainer Notes</h3>
+              <textarea 
+                v-model="noteText" 
+                placeholder="Add some notes about this Pokémon..."
+                rows="3"
+              ></textarea>
+              <button @click="saveNote" class="save-note-btn">Save Note</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="actions">
-        <button 
-          class="action-button" 
-          :class="{ 'release': isCaughtStatus, 'catch': !isCaughtStatus }"
-          @click="handleAction"
-        >
-          {{ isCaughtStatus ? 'Release' : 'Catch!' }}
-        </button>
+        <div class="actions">
+          <button 
+            class="action-button" 
+            :class="{ 'release': isCaughtStatus, 'catch': !isCaughtStatus }"
+            @click="handleAction"
+          >
+            {{ isCaughtStatus ? 'Release' : 'Catch!' }}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div v-else-if="loading" class="loading">
-    Loading Pokémon Details...
-  </div>
-  
-  <div v-else class="error">
-    Pokémon not found.
-    <button @click="goBack">Go Back</button>
-  </div>
+    <div v-else-if="loading" class="loading">
+      Loading Pokémon Details...
+    </div>
+    
+    <div v-else class="error">
+      Pokémon not found.
+      <button @click="goBack">Go Back</button>
+    </div>
 
-  <ConfirmationModal
-    :show="showConfirmModal"
-    title="Release Pokémon"
-    :message="`Are you sure you want to release ${pokemon?.name}?`"
-    confirm-text="Release"
-    type="danger"
-    @confirm="confirmRelease"
-    @cancel="showConfirmModal = false"
-  />
+    <ConfirmationModal
+      :show="showConfirmModal"
+      title="Release Pokémon"
+      :message="`Are you sure you want to release ${pokemon?.name}?`"
+      confirm-text="Release"
+      type="danger"
+      @confirm="confirmRelease"
+      @cancel="showConfirmModal = false"
+    />
+  </div>
 </template>
 
 <style scoped>

@@ -22,9 +22,9 @@ export const usePokemonStore = defineStore('pokemon', () => {
         return Math.round((caughtCount.value / totalCount.value) * 100);
     });
 
-    const isCaught = (id: number) => computed(() =>
-        caughtPokemon.value.some(p => p.id === id)
-    );
+    const caughtIds = computed(() => new Set(caughtPokemon.value.map(p => p.id)));
+
+    const isCaught = (id: number) => caughtIds.value.has(id);
 
     // Actions
     async function initialize() {

@@ -145,7 +145,7 @@ function handlePokemonClick(pokemon: any) {
 
     <div v-else>
       <PokemonGrid 
-        v-if="viewMode === 'grid'"
+        v-if="viewMode === 'grid' || !['list', 'table'].includes(viewMode)"
         :pokemon-list="filteredAndSortedPokemon" 
         @click="handlePokemonClick"
       />

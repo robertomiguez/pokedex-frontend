@@ -21,7 +21,7 @@ const { isCaught } = store;
       v-for="pokemon in pokemonList"
       :key="pokemon.id"
       :pokemon="pokemon"
-      :is-caught="isCaught(pokemon.id).value"
+      :is-caught="isCaught(pokemon.id)"
       @click="emit('click', pokemon)"
     />
   </div>

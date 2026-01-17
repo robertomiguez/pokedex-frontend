@@ -52,7 +52,7 @@ function padId(id: number): string {
             :title="type"
           ></span>
         </div>
-        <span v-if="isCaught(pokemon.id).value" class="caught-icon">★</span>
+        <span v-if="isCaught(pokemon.id)" class="caught-icon">★</span>
       </div>
     </div>
   </div>

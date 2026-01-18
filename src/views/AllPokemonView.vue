@@ -17,7 +17,7 @@ const store = usePokemonStore();
 const router = useRouter();
 const notificationStore = useNotificationStore();
 const { allPokemon, loading, error } = storeToRefs(store);
-const { fetchAllPokemon, initialize, catchPokemon, releasePokemon, isCaught } = store;
+const { fetchAllPokemon, initialize, catchPokemon, isCaught } = store;
 
 // View Mode State
 type ViewMode = 'grid' | 'list' | 'table';
@@ -61,9 +61,6 @@ const contextMenuVisible = ref(false);
 const contextMenuPosition = ref({ x: 0, y: 0 });
 
 const selectedCount = computed(() => selectedIds.value.size);
-
-// Simplified: We only care if we have selected items, which by definition must be uncaught
-const hasSelection = computed(() => selectedCount.value > 0);
 
 const contextMenuText = computed(() => {
     if (selectedCount.value === 1) {

@@ -66,7 +66,9 @@ export const usePokemonStore = defineStore('pokemon', () => {
             const detailPromises = listResp.results.map(async (item) => {
                 // Extract ID from URL or just use index+1 since we know it's 1-151
                 const parts = item.url.split('/');
-                const id = parseInt(parts[parts.length - 2]);
+                const idStr = parts[parts.length - 2];
+                if (!idStr) throw new Error(`Invalid URL: ${item.url}`);
+                const id = parseInt(idStr);
                 return pokemonApi.fetchPokemonById(id);
             });
 

@@ -17,6 +17,23 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  /* Prevent mobile browser context menu globally */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Prevent context menu on all interactive elements particularly images */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+img {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  pointer-events: none;
+  /* Let clicks pass through image to the card div */
 }
 
 h1 {

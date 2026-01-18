@@ -99,14 +99,14 @@ function handlePokemonClick(_event: MouseEvent | any, pokemon: Pokemon) {
 
   // Pure Selection Logic - Toggle
   if (selectedIds.value.has(pokemon.id)) {
-      selectedIds.value.delete(pokemon.id);
+    selectedIds.value.delete(pokemon.id);
   } else {
-      selectedIds.value.add(pokemon.id);
+    selectedIds.value.add(pokemon.id);
   }
   selectedIds.value = new Set(selectedIds.value); // Trigger reactivity
 }
 
-function handleRightClick(event: MouseEvent, pokemon: Pokemon) {
+function handleRightClick(event: MouseEvent | TouchEvent, pokemon: Pokemon) {
     // Prevent context menu for caught pokemon
     if (isCaught(pokemon.id)) return;
 
@@ -115,7 +115,41 @@ function handleRightClick(event: MouseEvent, pokemon: Pokemon) {
         selectedIds.value.add(pokemon.id);
         selectedIds.value = new Set(selectedIds.value);
     }
-    contextMenuPosition.value = { x: event.clientX, y: event.clientY };
+    
+    // Handle both MouseEvent and TouchEvent for coordinates
+    const clientX = 'clientX' in event ? event.clientX : (event as any).touches[0]?.clientX;
+    const clientY = 'clientY' in event ? event.clientY : (event as any).touches[0]?.clientY;
+
+    // Ignore invalid coordinates (often caused by native contextmenu on mobile firing with 0,0)
+    if (clientX === undefined || clientY === undefined || (clientX === 0 && clientY === 0)) {
+        return;
+    }
+
+    // Smart Positioning: Keep menu within viewport
+    // Default menu width is ~180px, height varies but let's assume ~150px safety
+    const menuWidth = 200;
+    const menuHeight = 200;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let x = clientX;
+    let y = clientY;
+
+    // Flip to left if too close to right edge
+    if (x + menuWidth > viewportWidth) {
+        x = x - menuWidth;
+    }
+
+    // Flip up if too close to bottom edge
+    if (y + menuHeight > viewportHeight) {
+        y = y - menuHeight;
+    }
+    
+    // Ensure it never goes off-screen top-left
+    x = Math.max(10, x);
+    y = Math.max(10, y);
+
+    contextMenuPosition.value = { x, y };
     contextMenuVisible.value = true;
 }
 
@@ -240,20 +274,21 @@ async function handleContextAction() {
         :pokemon-list="filteredAndSortedPokemon" 
         :selected-ids="selectedIds"
         @click="handlePokemonClick"
-        @contextmenu="handleRightClick"
+        @contextmenu.prevent="handleRightClick"
       />
       <PokemonList 
         v-else-if="viewMode === 'list'"
         :pokemon-list="filteredAndSortedPokemon" 
         :selected-ids="selectedIds"
         @click="handlePokemonClick"
-        @contextmenu="handleRightClick"
+        @contextmenu.prevent="handleRightClick"
       />
       <!-- PokemonTable not supporting selection/context yet, default click behavior there might just pass pokemon -->
       <PokemonTable 
         v-else-if="viewMode === 'table'"
         :pokemon-list="filteredAndSortedPokemon" 
-        @click="(p) => handlePokemonClick(null, p)" 
+        @click="(p) => handlePokemonClick(null, p)"
+        @contextmenu.prevent="handleRightClick"
       />
     </div>
 

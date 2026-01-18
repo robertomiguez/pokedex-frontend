@@ -10,6 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'click', pokemon: Pokemon): void;
+  (e: 'contextmenu', event: MouseEvent, pokemon: Pokemon): void;
 }>();
 
 const store = usePokemonStore();
@@ -80,12 +81,24 @@ function padId(id: number): string {
         }"
       >
         <template v-if="props.pokemonList[virtualRow.index]">
-            <div class="col-id" @click="emit('click', props.pokemonList[virtualRow.index])">{{ padId(props.pokemonList[virtualRow.index].id) }}</div>
-            <div class="col-image" @click="emit('click', props.pokemonList[virtualRow.index])">
+            <div class="col-id" 
+              @click="emit('click', props.pokemonList[virtualRow.index])"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
+            >{{ padId(props.pokemonList[virtualRow.index].id) }}</div>
+            <div class="col-image" 
+              @click="emit('click', props.pokemonList[virtualRow.index])"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
+            >
             <img :src="props.pokemonList[virtualRow.index].imageUrl" alt="" loading="lazy"/>
             </div>
-            <div class="col-name" @click="emit('click', props.pokemonList[virtualRow.index])">{{ props.pokemonList[virtualRow.index].name }}</div>
-            <div class="col-types" @click="emit('click', props.pokemonList[virtualRow.index])">
+            <div class="col-name" 
+              @click="emit('click', props.pokemonList[virtualRow.index])"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
+            >{{ props.pokemonList[virtualRow.index].name }}</div>
+            <div class="col-types" 
+              @click="emit('click', props.pokemonList[virtualRow.index])"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
+            >
             <span 
                 v-for="type in props.pokemonList[virtualRow.index].types" 
                 :key="type"
@@ -95,7 +108,10 @@ function padId(id: number): string {
                 {{ type }}
             </span>
             </div>
-            <div class="col-caught" @click="emit('click', props.pokemonList[virtualRow.index])">
+            <div class="col-caught" 
+              @click="emit('click', props.pokemonList[virtualRow.index])"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
+            >
             <span v-if="isCaught(props.pokemonList[virtualRow.index].id)">★</span>
             </div>
         </template>
@@ -123,6 +139,11 @@ function padId(id: number): string {
   transition: background-color 0.1s;
   padding: 0 1rem;
   box-sizing: border-box;
+  /* Prevent mobile browser context menu */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .table-row:hover {

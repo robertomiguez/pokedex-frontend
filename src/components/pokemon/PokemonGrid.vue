@@ -10,7 +10,7 @@ defineProps<{
 
 const emit = defineEmits<{
   (e: 'click', event: MouseEvent, pokemon: Pokemon): void;
-  (e: 'contextmenu', event: MouseEvent, pokemon: Pokemon): void;
+  (e: 'contextmenu', event: MouseEvent | TouchEvent, pokemon: Pokemon): void;
 }>();
 
 const store = usePokemonStore();

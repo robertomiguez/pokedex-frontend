@@ -45,6 +45,14 @@ const currentNote = computed(() => {
     return caughtData.value?.notes || '';
 });
 
+const displayNote = computed(() => {
+    const note = currentNote.value;
+    if (note.length > 30) {
+        return note.substring(0, 30) + '...';
+    }
+    return note;
+});
+
 onMounted(async () => {
   await initialize();
   if (allPokemon.value.length === 0) {
@@ -163,7 +171,7 @@ function getTypeColor(type: string) {
                 </button>
               </div>
               <div v-if="currentNote" class="notes-content">
-                {{ currentNote }}
+                {{ displayNote }}
               </div>
               <div v-else class="notes-empty">
                 No notes added yet.

@@ -41,7 +41,7 @@ function handleClose() {
         <textarea 
           v-model="note" 
           placeholder="Enter your notes here... (e.g. Strong against Fire, Bred for speed)"
-          rows="5"
+          rows="2"
           maxlength="500"
           autofocus
         ></textarea>
@@ -73,10 +73,10 @@ function handleClose() {
 
 .modal-content {
   background: white;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 12px;
   width: 90%;
-  max-width: 500px;
+  max-width: 400px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   animation: slideUp 0.2s ease-out;
 }
@@ -85,13 +85,13 @@ function handleClose() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 }
 
 .modal-header h3 {
   margin: 0;
   color: #2c3e50;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
 }
 
 .close-btn {
@@ -104,18 +104,20 @@ function handleClose() {
 }
 
 .modal-body {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 textarea {
   width: 100%;
-  padding: 0.75rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem;
   border: 1px solid #ddd;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.95rem;
   resize: vertical;
-  min-height: 100px;
+  min-height: 60px;
   transition: border-color 0.2s;
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { Pokemon, CaughtPokemon } from '@/types/domain';
 
 const props = defineProps<{
@@ -9,7 +9,105 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'click', event: MouseEvent): void;
+  (e: 'contextmenu', event: MouseEvent | TouchEvent): void;
 }>();
+
+const touchTimer = ref<number | null>(null);
+const touchStartPos = ref<{ x: number; y: number } | null>(null);
+const wasLongPress = ref(false);
+
+function handleTouchStart(event: TouchEvent) {
+  if (!event.touches[0]) return;
+  
+  const touch = event.touches[0];
+  touchStartPos.value = { x: touch.clientX, y: touch.clientY };
+  wasLongPress.value = false;
+  
+  // Start timer for long-press (500ms)
+  touchTimer.value = window.setTimeout(() => {
+    // Flag that this was a long press
+    wasLongPress.value = true;
+    
+    // Add haptic feedback if available for better UX
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    // Emit a synthetic event object that mimics a MouseEvent
+    // This ensures AllPokemonView receives valid 'clientX'/'clientY' properties
+    // bypassing any potential stale TouchEvent issues
+    const syntheticEvent = {
+        clientX: touchStartPos.value?.x || 0,
+        clientY: touchStartPos.value?.y || 0,
+        preventDefault: () => {},
+        stopPropagation: () => {}
+    };
+    
+    // Cast to any to satisfy the type requirement of emit which expects Event
+    emit('contextmenu', syntheticEvent as any);
+  }, 500);
+}
+
+function handleTouchMove(event: TouchEvent) {
+  // Cancel long-press if finger moves too much
+  if (touchStartPos.value && touchTimer.value) {
+    if (!event.touches[0]) return;
+    
+    const touch = event.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartPos.value.x);
+    const deltaY = Math.abs(touch.clientY - touchStartPos.value.y);
+    
+    // If moved more than 10px, cancel
+    if (deltaX > 10 || deltaY > 10) {
+      clearTimeout(touchTimer.value);
+      touchTimer.value = null;
+      wasLongPress.value = false;
+    }
+  }
+}
+
+function handleTouchEnd() {
+  // Clear timer if touch ends before long-press threshold
+  if (touchTimer.value) {
+    clearTimeout(touchTimer.value);
+    touchTimer.value = null;
+  }
+  touchStartPos.value = null;
+  // Clear timer if touch ends before long-press threshold
+  if (touchTimer.value) {
+    clearTimeout(touchTimer.value);
+    touchTimer.value = null;
+  }
+  touchStartPos.value = null;
+  // Note: We don't reset wasLongPress here immediately because the click event needs to read it
+  // We'll reset it in the click handler or after a timeout
+  setTimeout(() => {
+    wasLongPress.value = false;
+  }, 500); // Increased to 500ms to be safer against slow click events
+}
+
+function handleClick(event: MouseEvent) {
+  // If we just triggered a long press context menu, DO NOT emit click
+  // This prevents the parent from seeing a click and immediately closing the menu
+  if (wasLongPress.value) {
+    event.stopImmediatePropagation();
+    event.preventDefault();
+    return;
+  }
+  emit('click', event);
+}
+
+function handleContextMenu(event: Event) {
+  // If we triggered a long-press, we already emitted our custom event with correct coordinates.
+  // The native contextmenu event often arrives later with (0,0) coordinates on mobile.
+  // We must suppress it to prevent overwriting our correct position.
+  if (wasLongPress.value) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+  
+  // For desktop right-clicks, pass it through (it's a MouseEvent)
+  emit('contextmenu', event as MouseEvent);
+}
 
 const typeColors: Record<string, string> = {
   normal: '#A8A878',
@@ -50,7 +148,12 @@ function padId(id: number): string {
 <template>
   <div 
     class="pokemon-card" 
-    @click="emit('click', $event)" 
+    @click="handleClick"
+    @contextmenu.prevent="handleContextMenu"
+    @touchstart="handleTouchStart"
+    @touchmove="handleTouchMove"
+    @touchend="handleTouchEnd"
+    @touchcancel="handleTouchEnd"
     :class="{ 'is-caught': isCaught }"
     :style="{ background: cardBackground }"
   >
@@ -88,6 +191,11 @@ function padId(id: number): string {
   cursor: pointer;
   border: 2px solid transparent;
   overflow: hidden;
+  /* Prevent mobile browser context menu */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .pokemon-card:hover {

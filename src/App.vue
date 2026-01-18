@@ -8,6 +8,12 @@ import { useNotificationStore } from '@/stores/notifications';
 
 const notificationStore = useNotificationStore();
 
+// Globally prevent the native browser context menu
+// We use our own custom long-press/right-click logic
+window.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+}, { passive: false });
+
 onErrorCaptured((err) => {
   console.error('Captured Error:', err);
   notificationStore.addNotification({

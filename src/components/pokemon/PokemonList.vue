@@ -81,6 +81,11 @@ function padId(id: number): string {
   transition: transform 0.1s, box-shadow 0.1s;
   position: relative;
   overflow: hidden;
+  /* Prevent mobile browser context menu */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .pokemon-list-item:hover {
@@ -112,6 +117,8 @@ function padId(id: number): string {
   width: 50px;
   height: 50px;
   object-fit: contain;
+  pointer-events: none; /* Pass touches to the row */
+  -webkit-touch-callout: none;
 }
 
 .item-info {

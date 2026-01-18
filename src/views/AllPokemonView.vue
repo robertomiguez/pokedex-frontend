@@ -278,6 +278,8 @@ async function handleContextAction() {
 <style scoped>
 .all-pokemon-view {
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .controls-bar {

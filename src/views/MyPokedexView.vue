@@ -270,6 +270,8 @@ const confirmModalMessage = computed(() => {
 <style scoped>
 .my-pokedex-view {
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .stats-bar {

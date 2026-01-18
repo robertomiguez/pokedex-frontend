@@ -41,6 +41,7 @@ const { isCaught } = store;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1.5rem;
   padding: 1rem 0;
+  justify-content: center;
 }
 
 .card-wrapper {

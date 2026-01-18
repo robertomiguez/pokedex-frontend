@@ -40,3 +40,33 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+
+/* 
+  Issue #89: Force Input Fields to use Light Theme Contrast 
+  Even in Dark Mode, user requests White Background + Black Text 
+*/
+input[type="text"],
+input[type="number"],
+input[type="search"],
+textarea,
+select {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #ddd;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #666666 !important;
+  opacity: 1;
+  /* Firefox default opacity fix */
+}
+
+/* Ensure focus states are visible */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #646cff;
+  border-color: #646cff;
+  background-color: #ffffff !important;
+}

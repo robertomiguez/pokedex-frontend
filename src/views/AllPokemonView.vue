@@ -333,6 +333,8 @@ async function handleContextAction() {
   border-radius: 4px;
   width: 250px;
   font-size: 1rem;
+  background-color: white;
+  color: black;
 }
 
 .filter-group {
@@ -346,6 +348,7 @@ async function handleContextAction() {
   border: 1px solid #ddd;
   border-radius: 4px;
   background-color: white;
+  color: black;
   font-size: 1rem;
   cursor: pointer;
 }

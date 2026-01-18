@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
-      registerType: 'promptUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Pokedex App',

@@ -69,7 +69,7 @@ function padId(id: number): string {
       
       <div 
         v-for="virtualRow in items"
-        :key="virtualRow.key"
+        :key="`${virtualRow.key}`"
         class="table-row"
         :style="{
           position: 'absolute',
@@ -82,25 +82,25 @@ function padId(id: number): string {
       >
         <template v-if="props.pokemonList[virtualRow.index]">
             <div class="col-id" 
-              @click="emit('click', props.pokemonList[virtualRow.index])"
-              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
-            >{{ padId(props.pokemonList[virtualRow.index].id) }}</div>
+              @click="emit('click', props.pokemonList[virtualRow.index]!)"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index]!)"
+            >{{ padId(props.pokemonList[virtualRow.index]!.id) }}</div>
             <div class="col-image" 
-              @click="emit('click', props.pokemonList[virtualRow.index])"
-              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
+              @click="emit('click', props.pokemonList[virtualRow.index]!)"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index]!)"
             >
-            <img :src="props.pokemonList[virtualRow.index].imageUrl" alt="" loading="lazy"/>
+            <img :src="props.pokemonList[virtualRow.index]!.imageUrl" alt="" loading="lazy"/>
             </div>
             <div class="col-name" 
-              @click="emit('click', props.pokemonList[virtualRow.index])"
-              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
-            >{{ props.pokemonList[virtualRow.index].name }}</div>
+              @click="emit('click', props.pokemonList[virtualRow.index]!)"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index]!)"
+            >{{ props.pokemonList[virtualRow.index]!.name }}</div>
             <div class="col-types" 
-              @click="emit('click', props.pokemonList[virtualRow.index])"
-              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
+              @click="emit('click', props.pokemonList[virtualRow.index]!)"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index]!)"
             >
             <span 
-                v-for="type in props.pokemonList[virtualRow.index].types" 
+                v-for="type in props.pokemonList[virtualRow.index]!.types" 
                 :key="type"
                 class="type-badge"
                 :style="{ backgroundColor: typeColors[type] }"
@@ -109,10 +109,10 @@ function padId(id: number): string {
             </span>
             </div>
             <div class="col-caught" 
-              @click="emit('click', props.pokemonList[virtualRow.index])"
-              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index])"
+              @click="emit('click', props.pokemonList[virtualRow.index]!)"
+              @contextmenu.prevent="emit('contextmenu', $event, props.pokemonList[virtualRow.index]!)"
             >
-            <span v-if="isCaught(props.pokemonList[virtualRow.index].id)">★</span>
+            <span v-if="isCaught(props.pokemonList[virtualRow.index]!.id)">★</span>
             </div>
         </template>
       </div>

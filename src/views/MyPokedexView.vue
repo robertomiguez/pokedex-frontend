@@ -14,7 +14,6 @@ const { initialize, releasePokemon, updatePokemon } = store;
 
 // Single release state
 const showConfirmModal = ref(false);
-const pokemonToRelease = ref<{id: number, name: string} | null>(null);
 
 // Note state
 const showNoteModal = ref(false);
@@ -76,7 +75,7 @@ function toggleSelection(id: number) {
   selectMode.value = selectedIds.value.size > 0;
 }
 
-function handleCardClick(event: MouseEvent, id: number, name: string) {
+function handleCardClick(event: MouseEvent, id: number) {
   if (contextMenuVisible.value) {
     closeContextMenu();
   }
@@ -93,7 +92,7 @@ function handleCardClick(event: MouseEvent, id: number, name: string) {
   }
 }
 
-function handleRightClick(event: MouseEvent, id: number, name: string) {
+function handleRightClick(event: MouseEvent, id: number) {
   // 1. Manage Selection
   if (!selectedIds.value.has(id)) {
       // If right-clicking unselected item, it becomes the only selection
@@ -212,12 +211,12 @@ const confirmModalMessage = computed(() => {
         :key="pokemon.id"
         class="card-wrapper"
         :class="{ 'selected': selectMode && selectedIds.has(pokemon.id) }"
-        @contextmenu.prevent="handleRightClick($event, pokemon.id, pokemon.name)"
+        @contextmenu.prevent="handleRightClick($event, pokemon.id)"
       >
         <PokemonCard
           :pokemon="pokemon"
           :is-caught="true"
-          @click="handleCardClick($event, pokemon.id, pokemon.name)"
+          @click="handleCardClick($event, pokemon.id)"
         />
         <!-- Note Indicator if note exists -->
         <div v-if="pokemon.notes" class="note-indicator" title="Has Notes">📝</div>

@@ -119,6 +119,8 @@ textarea {
   resize: vertical;
   min-height: 60px;
   transition: border-color 0.2s;
+  background-color: white; /* Issue #89: Force light theme */
+  color: black;            /* Issue #89: Force light theme */
 }
 
 textarea:focus {

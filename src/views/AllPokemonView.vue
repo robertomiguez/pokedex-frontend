@@ -267,7 +267,7 @@ async function handleContextAction() {
 
     <div v-else-if="error" class="error-state">
       {{ error }}
-      <button @click="fetchAllPokemon">Retry</button>
+      <button @click="fetchAllPokemon(true)">Retry</button>
     </div>
 
     <div v-else>

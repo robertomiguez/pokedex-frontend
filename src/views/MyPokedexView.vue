@@ -7,8 +7,10 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import NoteModal from '@/components/ui/NoteModal.vue';
 import { storeToRefs } from 'pinia';
 import { exportPokemonToCSV } from '@/utils/csvExport';
+import { useRouter } from 'vue-router';
 
 const store = usePokemonStore();
+const router = useRouter();
 
 const notificationStore = useNotificationStore();
 const { caughtPokemon, caughtCount, progress } = storeToRefs(store);
@@ -109,6 +111,15 @@ function handleRightClick(event: MouseEvent, id: number) {
 function closeContextMenu() {
   contextMenuVisible.value = false;
 }
+
+function initiateViewDetail() {
+    const p = singleSelectedPokemon.value;
+    if (p) {
+        router.push({ name: 'pokemon-info', params: { id: p.id } });
+    }
+    closeContextMenu();
+}
+
 
 function initiateRelease() {
   if (selectedCount.value > 0) {
@@ -232,6 +243,15 @@ const confirmModalMessage = computed(() => {
       :style="{ top: `${contextMenuPosition.y}px`, left: `${contextMenuPosition.x}px` }"
       @click.stop
     >
+      <!-- Option for Detail (Only if single selection) -->
+      <div 
+        v-if="selectedCount === 1" 
+        class="menu-item" 
+        @click="initiateViewDetail"
+      >
+        <span class="icon">ℹ️</span> View Detail
+      </div>
+
       <!-- Option for Note (Only if single selection) -->
       <div 
         v-if="selectedCount === 1" 

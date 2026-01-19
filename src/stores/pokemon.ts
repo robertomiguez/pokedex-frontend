@@ -2,9 +2,13 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Pokemon, CaughtPokemon } from '@/types/domain';
 import { pokemonApi } from '@/services/api/pokemonApi';
-import { pokemonMapper } from '@/services/mappers/pokemonMapper';
+import { pokemonGraphQLMapper } from '@/services/mappers/pokemonGraphQLMapper';
 import { pokemonRepository } from '@/storage/repositories/pokemonRepository';
 import { caughtPokemonRepository } from '@/storage/repositories/caughtPokemonRepository';
+
+// Cache expiration: 24 hours in milliseconds
+const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000;
+const CACHE_KEY = 'pokemon_cache_timestamp';
 
 export const usePokemonStore = defineStore('pokemon', () => {
     // State
@@ -26,6 +30,20 @@ export const usePokemonStore = defineStore('pokemon', () => {
 
     const isCaught = (id: number) => caughtIds.value.has(id);
 
+    // Check if cache is expired
+    function isCacheExpired(): boolean {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return true;
+
+        const timestamp = parseInt(cached, 10);
+        return Date.now() - timestamp > CACHE_EXPIRATION_MS;
+    }
+
+    // Update cache timestamp
+    function updateCacheTimestamp(): void {
+        localStorage.setItem(CACHE_KEY, Date.now().toString());
+    }
+
     // Actions
     async function initialize() {
         if (initialized.value) return;
@@ -33,10 +51,12 @@ export const usePokemonStore = defineStore('pokemon', () => {
             // Load caught pokemon from storage
             caughtPokemon.value = await caughtPokemonRepository.getAll();
 
-            // Load cached pokemon from storage
-            const cached = await pokemonRepository.getAll();
-            if (cached.length > 0) {
-                allPokemon.value = cached;
+            // Load cached pokemon from storage (if not expired)
+            if (!isCacheExpired()) {
+                const cached = await pokemonRepository.getAll();
+                if (cached.length > 0) {
+                    allPokemon.value = cached;
+                }
             }
 
             initialized.value = true;
@@ -46,44 +66,32 @@ export const usePokemonStore = defineStore('pokemon', () => {
         }
     }
 
-    async function fetchAllPokemon() {
+    async function fetchAllPokemon(force = false) {
         if (loading.value) return;
 
-        // If we already have data (from cache in initialize), mostly good. 
-        // But if cache was empty, we need to fetch.
-        if (allPokemon.value.length > 0) return;
+        // Skip if we have data and not forcing refresh
+        if (allPokemon.value.length > 0 && !force) return;
 
         loading.value = true;
         error.value = null;
 
         try {
-            // 1. Fetch List (Gen 1 for now: 151)
-            const listResp = await pokemonApi.fetchPokemonList(0, 151);
+            // Issue #93: Use GraphQL for bulk fetch (1 request instead of 1000+)
+            const graphqlResponse = await pokemonApi.fetchAllPokemonGraphQL();
 
-            // 2. Fetch Details for each
-            // We process in chunks or parallel. For 151, Promise.all might be okay but heavy.
-            // Let's do parallel requests.
-            const detailPromises = listResp.results.map(async (item) => {
-                // Extract ID from URL or just use index+1 since we know it's 1-151
-                const parts = item.url.split('/');
-                const idStr = parts[parts.length - 2];
-                if (!idStr) throw new Error(`Invalid URL: ${item.url}`);
-                const id = parseInt(idStr);
-                return pokemonApi.fetchPokemonById(id);
-            });
+            // Map to Domain
+            const mapped = pokemonGraphQLMapper.toDomainList(graphqlResponse.data.pokemon_v2_pokemon);
 
-            const details = await Promise.all(detailPromises);
-
-            // 3. Map to Domain
-            const mapped = details.map(pokemonMapper.toDomain);
-
-            // 4. Update State
+            // Update State
             allPokemon.value = mapped;
 
-            // 5. Cache
+            // Cache
             // Use deep clone to avoid Proxy issues with IDB
             const rawMapped = JSON.parse(JSON.stringify(mapped));
             await pokemonRepository.saveMany(rawMapped);
+
+            // Update cache timestamp
+            updateCacheTimestamp();
 
         } catch (e) {
             console.error('Failed to fetch pokemon:', e);
@@ -91,6 +99,13 @@ export const usePokemonStore = defineStore('pokemon', () => {
         } finally {
             loading.value = false;
         }
+    }
+
+    // Force refresh from API (clears cache and re-fetches)
+    async function refreshPokemon() {
+        localStorage.removeItem(CACHE_KEY);
+        allPokemon.value = [];
+        await fetchAllPokemon(true);
     }
 
     async function catchPokemon(pokemon: Pokemon) {
@@ -145,6 +160,7 @@ export const usePokemonStore = defineStore('pokemon', () => {
         initialized,
         initialize,
         fetchAllPokemon,
+        refreshPokemon,
         catchPokemon,
         releasePokemon,
         updatePokemon,
@@ -154,3 +170,4 @@ export const usePokemonStore = defineStore('pokemon', () => {
         isCaught
     };
 });
+

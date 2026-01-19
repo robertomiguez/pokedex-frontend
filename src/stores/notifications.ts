@@ -1,12 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-
-export interface Notification {
-    id: string;
-    message: string;
-    type: 'info' | 'success' | 'warning' | 'error';
-    duration?: number;
-}
+import type { Notification } from '@/types/ui';
 
 export const useNotificationStore = defineStore('notifications', () => {
     const notifications = ref<Notification[]>([]);

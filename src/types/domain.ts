@@ -1,8 +1,11 @@
-export type PokemonType =
-    | 'normal' | 'fire' | 'water' | 'grass' | 'electric'
-    | 'ice' | 'fighting' | 'poison' | 'ground' | 'flying'
-    | 'psychic' | 'bug' | 'rock' | 'ghost' | 'dragon'
-    | 'steel' | 'dark' | 'fairy';
+export const POKEMON_TYPES = [
+    'normal', 'fire', 'water', 'grass', 'electric',
+    'ice', 'fighting', 'poison', 'ground', 'flying',
+    'psychic', 'bug', 'rock', 'ghost', 'dragon',
+    'steel', 'dark', 'fairy'
+] as const;
+
+export type PokemonType = (typeof POKEMON_TYPES)[number];
 
 export interface PokemonStats {
     hp: number;

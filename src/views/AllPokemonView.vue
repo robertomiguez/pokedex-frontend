@@ -9,7 +9,8 @@ import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 import { pokemonFilters } from '@/utils/pokemonFilters';
 import { pokemonSorting, type SortField, type SortDirection } from '@/utils/pokemonSorting';
-import type { PokemonType, Pokemon } from '@/types/domain';
+import { type PokemonType, type Pokemon, POKEMON_TYPES } from '@/types/domain';
+import type { ViewMode } from '@/types/ui';
 import { useNotificationStore } from '@/stores/notifications';
 
 const store = usePokemonStore();
@@ -19,7 +20,6 @@ const { allPokemon, loading, error } = storeToRefs(store);
 const { fetchAllPokemon, initialize, catchPokemon, isCaught, refreshPokemon } = store;
 
 // View Mode State
-type ViewMode = 'grid' | 'list' | 'table';
 const viewMode = ref<ViewMode>((localStorage.getItem('pokedex-view-mode') as ViewMode) || 'grid');
 
 function setViewMode(mode: ViewMode) {
@@ -33,11 +33,7 @@ const selectedType = ref<PokemonType | ''>('');
 const sortField = ref<SortField>('id');
 const sortDirection = ref<SortDirection>('asc');
 
-const pokemonTypes: PokemonType[] = [
-  'normal', 'fire', 'water', 'grass', 'electric', 'ice', 'fighting', 'poison',
-  'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'steel',
-  'dark', 'fairy'
-];
+const pokemonTypes = POKEMON_TYPES;
 
 // Computed List
 const filteredAndSortedPokemon = computed(() => {

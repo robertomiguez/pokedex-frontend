@@ -17,7 +17,7 @@ const store = usePokemonStore();
 const router = useRouter();
 const notificationStore = useNotificationStore();
 const { allPokemon, loading, error } = storeToRefs(store);
-const { fetchAllPokemon, initialize, catchPokemon, isCaught } = store;
+const { fetchAllPokemon, initialize, catchPokemon, isCaught, refreshPokemon } = store;
 
 // View Mode State
 type ViewMode = 'grid' | 'list' | 'table';
@@ -240,9 +240,14 @@ async function handleContextAction() {
         </button>
       </div>
 
-      <button @click="exportPokemonToCSV(filteredAndSortedPokemon)" class="export-btn">
-        Export CSV
-      </button>
+      <div class="view-mode-group">
+        <button @click="exportPokemonToCSV(filteredAndSortedPokemon)" class="export-btn">
+          Export CSV
+        </button>
+        <button @click="refreshPokemon" class="refresh-btn" :disabled="loading" title="Refresh Pokemon data">
+          🔄 Refresh
+        </button>
+      </div>
     </div>
 
     <!-- Stats -->
@@ -323,18 +328,21 @@ async function handleContextAction() {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
 }
 
 .search-box input {
-  padding: 0.8rem;
+  padding: 0 0.8rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   width: 250px;
-  font-size: 1rem;
+  font-size: 0.9rem;
   background-color: white;
   color: black;
+  height: 36px;
+  line-height: 36px;
+  box-sizing: border-box;
 }
 
 .filter-group {
@@ -344,13 +352,16 @@ async function handleContextAction() {
 }
 
 .filter-group select {
-  padding: 0.8rem;
+  padding: 0 2rem 0 0.8rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   background-color: white;
   color: black;
-  font-size: 1rem;
+  font-size: 0.9rem;
   cursor: pointer;
+  height: 36px;
+  line-height: 36px;
+  box-sizing: border-box;
 }
 
 .view-mode-group {
@@ -360,11 +371,14 @@ async function handleContextAction() {
 
 .view-mode-group button {
   margin: 0;
-  padding: 0.5rem 0.8rem;
+  padding: 0.5rem 1rem;
   background-color: white;
   color: #666;
   border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 0.9rem;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .view-mode-group button.active {
@@ -382,10 +396,34 @@ async function handleContextAction() {
   padding: 0.5rem 1rem;
   margin: 0;
   cursor: pointer;
+  font-size: 0.9rem;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .export-btn:hover {
   background-color: #45a049;
+}
+
+.refresh-btn {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background-color: #1976D2;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .loading-grid {

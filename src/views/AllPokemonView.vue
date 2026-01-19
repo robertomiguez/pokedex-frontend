@@ -10,7 +10,6 @@ import { useRouter } from 'vue-router';
 import { pokemonFilters } from '@/utils/pokemonFilters';
 import { pokemonSorting, type SortField, type SortDirection } from '@/utils/pokemonSorting';
 import type { PokemonType, Pokemon } from '@/types/domain';
-import { exportPokemonToCSV } from '@/utils/csvExport';
 import { useNotificationStore } from '@/stores/notifications';
 
 const store = usePokemonStore();
@@ -241,9 +240,6 @@ async function handleContextAction() {
       </div>
 
       <div class="view-mode-group">
-        <button @click="exportPokemonToCSV(filteredAndSortedPokemon)" class="export-btn">
-          Export CSV
-        </button>
         <button @click="refreshPokemon" class="refresh-btn" :disabled="loading" title="Refresh Pokemon data">
           🔄 Refresh
         </button>
@@ -388,22 +384,7 @@ async function handleContextAction() {
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.export-btn {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  margin: 0;
-  cursor: pointer;
-  font-size: 0.9rem;
-  height: 36px;
-  box-sizing: border-box;
-}
 
-.export-btn:hover {
-  background-color: #45a049;
-}
 
 .refresh-btn {
   background-color: #2196F3;

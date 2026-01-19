@@ -6,6 +6,7 @@ import { usePokemonStore } from '@/stores/pokemon';
 import { storeToRefs } from 'pinia';
 import type { CaughtPokemon } from '@/types/domain';
 
+import PokemonDetailCard from '@/components/pokemon/PokemonDetailCard.vue';
 import NoteModal from '@/components/ui/NoteModal.vue';
 
 const route = useRoute();
@@ -31,26 +32,8 @@ const caughtData = computed(() => {
   return caughtPokemon.value.find(p => p.id === pokemonId.value);
 });
 
-const caughtDateFormatted = computed(() => {
-  if (!caughtData.value) return null;
-  const date = new Date(caughtData.value.caughtAt);
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
-  });
-});
-
 const currentNote = computed(() => {
     return caughtData.value?.notes || '';
-});
-
-const displayNote = computed(() => {
-    const note = currentNote.value;
-    if (note.length > 30) {
-        return note.substring(0, 30) + '...';
-    }
-    return note;
 });
 
 onMounted(async () => {
@@ -96,18 +79,6 @@ async function saveNote(note: string) {
 function goBack() {
   router.back();
 }
-
-const typeColors: Record<string, string> = {
-  normal: '#A8A878', fire: '#F08030', water: '#6890F0', grass: '#78C850',
-  electric: '#F8D030', ice: '#98D8D8', fighting: '#C03028', poison: '#A040A0',
-  ground: '#E0C068', flying: '#A890F0', psychic: '#F85888', bug: '#A8B820',
-  rock: '#B8A038', ghost: '#705898', dragon: '#7038F8', steel: '#B8B8D0',
-  dark: '#705848', fairy: '#EE99AC',
-};
-
-function getTypeColor(type: string) {
-  return typeColors[type] || '#777';
-}
 </script>
 
 <template>
@@ -115,80 +86,15 @@ function getTypeColor(type: string) {
     <div class="pokemon-detail-view" v-if="pokemon">
       <button class="back-button" @click="goBack">← Back</button>
       
-      <div class="detail-card">
-        <div class="header">
-          <h1>{{ pokemon.name }}</h1>
-          <span class="id">#{{ pokemon.id.toString().padStart(3, '0') }}</span>
-        </div>
-
-        <div class="caught-info" v-if="isCaughtStatus">
-          <span class="caught-star">★</span>
-          <span class="caught-text">Caught on {{ caughtDateFormatted }}</span>
-        </div>
-
-        <div class="content-split">
-          <div class="image-section">
-            <img :src="pokemon.imageUrl" :alt="pokemon.name" />
-            <div class="types">
-              <span 
-                v-for="type in pokemon.types" 
-                :key="type"
-                class="type-badge"
-                :style="{ backgroundColor: getTypeColor(type) }"
-              >
-                {{ type }}
-              </span>
-            </div>
-          </div>
-
-          <div class="stats-section">
-            <h2>Stats</h2>
-            <div class="stat-row" v-for="(value, stat) in pokemon.stats" :key="stat">
-              <span class="stat-name">{{ stat }}</span>
-              <div class="stat-bar-container">
-                  <div class="stat-bar"
-                       :style="{ width: Math.min((value / 255) * 100, 100) + '%', backgroundColor: getTypeColor(pokemon.types[0] || 'normal') }"
-                  ></div>
-              </div>
-              <span class="stat-val">{{ value }}</span>
-            </div>
-            
-            <div class="physical-stats">
-               <div class="p-stat">
-                 <strong>Height:</strong> {{ pokemon.height / 10 }}m
-               </div>
-               <div class="p-stat">
-                 <strong>Weight:</strong> {{ pokemon.weight / 10 }}kg
-               </div>
-            </div>
-
-            <!-- Read-only Notes Section -->
-            <div class="notes-section" v-if="isCaughtStatus">
-              <div class="notes-header">
-                <h3>Trainer Notes</h3>
-                <button @click="openNoteModal" class="edit-note-btn">
-                  {{ currentNote ? 'Edit Notes' : 'Add Trainer Notes' }}
-                </button>
-              </div>
-              <div v-if="currentNote" class="notes-content">
-                {{ displayNote }}
-              </div>
-              <div v-else class="notes-empty">
-                No notes added yet.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="actions" v-if="!isCaughtStatus">
-          <button 
-            class="action-button catch" 
-            @click="handleAction"
-          >
-            Catch!
-          </button>
-        </div>
-      </div>
+      <PokemonDetailCard
+        :pokemon="pokemon"
+        :is-caught="isCaughtStatus"
+        :caught-data="caughtData"
+        :show-actions="true"
+        :show-notes="true"
+        @action="handleAction"
+        @edit-note="openNoteModal"
+      />
     </div>
 
     <div v-else-if="loading" class="loading">

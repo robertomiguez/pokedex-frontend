@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { Pokemon, CaughtPokemon } from '@/types/domain';
 
 interface Props {
@@ -20,6 +20,9 @@ const emit = defineEmits<{
   (e: 'action'): void;
   (e: 'edit-note'): void;
 }>();
+
+const showShareModal = ref(false);
+const copied = ref(false);
 
 const caughtDateFormatted = computed(() => {
   if (!props.caughtData) return null;
@@ -54,13 +57,69 @@ const typeColors: Record<string, string> = {
 function getTypeColor(type: string) {
   return typeColors[type] || '#777';
 }
+
+async function sharePokemon() {
+  const shareData = {
+    title: `Check out ${props.pokemon.name}!`,
+    text: `I found this cool Pokémon: ${props.pokemon.name} (#${props.pokemon.id})`,
+    url: window.location.href,
+  };
+
+  // Try native share first (Mobile)
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch (err) {
+      console.log('Native share cancelled or failed, falling back to modal');
+    }
+  }
+
+  // Fallback to custom modal (Desktop)
+  showShareModal.value = true;
+  copyLink(); // Auto-copy for convenience
+}
+
+async function copyLink() {
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    copied.value = true;
+    setTimeout(() => copied.value = false, 2000);
+  } catch (err) {
+    console.error('Failed to copy link:', err);
+  }
+}
+
+function closeShareModal() {
+  showShareModal.value = false;
+  copied.value = false;
+}
+
+function selectInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  if (target) {
+    target.select();
+  }
+}
 </script>
 
 <template>
   <div class="detail-card">
     <div class="header">
       <h1>{{ pokemon.name }}</h1>
-      <span class="id">#{{ pokemon.id.toString().padStart(3, '0') }}</span>
+      <div class="header-right">
+        <button @click="sharePokemon" class="share-btn" title="Share Pokémon">
+          <!-- Share Node Icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+        </button>
+        <span class="id">#{{ pokemon.id.toString().padStart(3, '0') }}</span>
+      </div>
     </div>
 
     <div class="caught-info" v-if="isCaught && caughtData">
@@ -130,6 +189,31 @@ function getTypeColor(type: string) {
         Catch!
       </button>
     </div>
+
+    <!-- Share Modal -->
+    <div v-if="showShareModal" class="modal-overlay" @click.self="closeShareModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Share Pokémon</h3>
+          <button class="close-btn" @click="closeShareModal">×</button>
+        </div>
+        <div class="modal-body">
+          <p>Share this link with your fellow trainers:</p>
+          <div class="link-container">
+            <input 
+              type="text" 
+              readonly 
+              :value="`https://pokedex.app/pokemon/${pokemon.id}`" 
+              class="link-input"
+              @click="selectInput"
+            />
+          </div>
+          <div class="feedback-area">
+             <span v-if="copied" class="copied-badge">✅ Copied to clipboard!</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -139,6 +223,7 @@ function getTypeColor(type: string) {
   border-radius: 1rem;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  position: relative;
 }
 
 .header {
@@ -153,6 +238,32 @@ function getTypeColor(type: string) {
   margin: 0;
   font-size: 2.5rem;
   color: #2c3e50;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.share-btn {
+  background: none;
+  border: 1px solid #eee;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.share-btn:hover {
+  background-color: #f0f0f0;
+  color: #333;
+  border-color: #ccc;
 }
 
 .id {
@@ -346,5 +457,101 @@ function getTypeColor(type: string) {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  animation: slideUp 0.2s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0 0.5rem;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.link-container {
+  margin: 1rem 0;
+}
+
+.link-input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #555;
+  background-color: #f9f9f9;
+  box-sizing: border-box;
+}
+
+.link-input:focus {
+  outline: 2px solid #667eea;
+  border-color: #667eea;
+}
+
+.feedback-area {
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.copied-badge {
+  color: #4CAF50;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 </style>

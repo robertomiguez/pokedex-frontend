@@ -24,12 +24,12 @@ onUnmounted(() => {
       <div class="container header-content">
         <router-link to="/" class="brand">
           <span class="pokeball-icon">🔴</span>
-          <h1>Pokedex<span class="highlight">Pro</span></h1>
+          <h2>Pokedex<span class="highlight">Pro</span></h2>
         </router-link>
         
         <nav class="main-nav">
-          <router-link to="/" class="nav-link" active-class="active">All Pokémon</router-link>
-          <router-link to="/pokedex" class="nav-link" active-class="active">My Pokedex</router-link>
+          <router-link to="/" class="nav-link" active-class="active">Pokémon</router-link>
+          <router-link to="/pokedex" class="nav-link" active-class="active">Pokedex</router-link>
         </nav>
       </div>
     </header>
@@ -83,7 +83,7 @@ onUnmounted(() => {
 }
 
 .pokeball-icon {
-  font-size: 1.8rem;
+  font-size: 1rem;
 }
 
 h1 {
@@ -100,7 +100,6 @@ h1 {
 
 .main-nav {
   display: flex;
-  gap: 1.5rem;
 }
 
 .nav-link {

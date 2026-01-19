@@ -6,8 +6,10 @@ import PokemonCard from '@/components/pokemon/PokemonCard.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import NoteModal from '@/components/ui/NoteModal.vue';
 import { storeToRefs } from 'pinia';
+import { exportPokemonToCSV } from '@/utils/csvExport';
 
 const store = usePokemonStore();
+
 const notificationStore = useNotificationStore();
 const { caughtPokemon, caughtCount, progress } = storeToRefs(store);
 const { initialize, releasePokemon, updatePokemon } = store;
@@ -198,6 +200,9 @@ const confirmModalMessage = computed(() => {
         <span class="stat-label">Progress:</span>
         <span class="stat-value">{{ progress }}%</span>
       </div>
+      <button @click="exportPokemonToCSV(caughtPokemon)" class="export-btn" title="Export Caught Pokemon to CSV">
+        Export CSV
+      </button>
     </div>
 
     <div v-if="caughtCount === 0" class="empty-state">
@@ -281,9 +286,26 @@ const confirmModalMessage = computed(() => {
   margin-bottom: 2rem;
   display: flex;
   gap: 2rem;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.export-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  height: 36px;
+  box-sizing: border-box;
+  margin-left: auto; /* Push to right if justified flex-start */
+}
+
+.export-btn:hover {
+  background-color: #45a049;
 }
 
 .stat-item {

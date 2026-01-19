@@ -71,6 +71,7 @@ function padId(id: number): string {
         v-for="virtualRow in items"
         :key="`${virtualRow.key}`"
         class="table-row"
+        :class="{ 'is-caught': props.pokemonList[virtualRow.index] && isCaught(props.pokemonList[virtualRow.index]!.id) }"
         :style="{
           position: 'absolute',
           top: 0,
@@ -163,5 +164,22 @@ function padId(id: number): string {
   padding: 0.2rem 0.6rem;
   border-radius: 1rem;
   text-transform: capitalize;
+}
+
+/* Grey out caught Pokemon */
+.table-row.is-caught {
+  background-color: #f0f0f0 !important;
+  cursor: default;
+}
+
+.table-row.is-caught:hover {
+  background-color: #f0f0f0 !important;
+}
+
+.table-row.is-caught .col-id,
+.table-row.is-caught .col-name,
+.table-row.is-caught .col-image img {
+  filter: grayscale(1);
+  opacity: 0.5;
 }
 </style>

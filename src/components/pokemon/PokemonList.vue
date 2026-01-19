@@ -34,7 +34,10 @@ function padId(id: number): string {
       v-for="pokemon in pokemonList"
       :key="pokemon.id"
       class="pokemon-list-item"
-      :class="{ 'selected': selectedIds?.has(pokemon.id) }"
+      :class="{ 
+        'selected': selectedIds?.has(pokemon.id),
+        'is-caught': isCaught(pokemon.id)
+      }"
       @click="emit('click', $event, pokemon)"
       @contextmenu.prevent="emit('contextmenu', $event, pokemon)"
     >
@@ -161,5 +164,23 @@ function padId(id: number): string {
 .caught-icon {
   color: #FFD700;
   font-size: 1.2rem;
+}
+
+/* Grey out caught Pokemon */
+.pokemon-list-item.is-caught {
+  background: #f0f0f0 !important;
+  cursor: default;
+}
+
+.pokemon-list-item.is-caught:hover {
+  transform: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.pokemon-list-item.is-caught .item-left img,
+.pokemon-list-item.is-caught .pokemon-id,
+.pokemon-list-item.is-caught .pokemon-name {
+  filter: grayscale(1);
+  opacity: 0.5;
 }
 </style>

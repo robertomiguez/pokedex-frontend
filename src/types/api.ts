@@ -45,23 +45,31 @@ export interface PokemonDetailResponse {
     stats: PokemonStatResponse[];
 }
 
+// GraphQL Types (Issue #93)
+export interface PokemonGraphQLType {
+    pokemon_v2_type: {
+        name: string;
+    };
+}
+
+export interface PokemonGraphQLStat {
+    base_stat: number;
+    pokemon_v2_stat: {
+        name: string;
+    };
+}
+
 export interface PokemonGraphQLItem {
     id: number;
     name: string;
     height: number;
     weight: number;
-    pokemon_v2_pokemonsprites: {
-        sprites: string;
-    }[];
-    pokemon_v2_pokemontypes: {
-        pokemon_v2_type: {
-            name: string;
-        };
-    }[];
-    pokemon_v2_pokemonstats: {
-        base_stat: number;
-        pokemon_v2_stat: {
-            name: string;
-        };
-    }[];
+    pokemon_v2_pokemontypes: PokemonGraphQLType[];
+    pokemon_v2_pokemonstats: PokemonGraphQLStat[];
+}
+
+export interface PokemonGraphQLResponse {
+    data: {
+        pokemon_v2_pokemon: PokemonGraphQLItem[];
+    };
 }

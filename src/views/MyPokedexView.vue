@@ -85,11 +85,8 @@ function handleCardClick(event: MouseEvent, id: number) {
   if (event.ctrlKey || event.metaKey) {
     toggleSelection(id);
   } else {
-    // Normal click now JUST selects (or clears and selects)
-    // Removed the "else -> Single release" logic
-    selectedIds.value.clear();
-    selectedIds.value.add(id);
-    selectedIds.value = new Set(selectedIds.value);
+    // Exclusive selection: Clear everything else, select ONLY this one
+    selectedIds.value = new Set([id]);
     selectMode.value = true;
   }
 }

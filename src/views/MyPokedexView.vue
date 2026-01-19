@@ -5,9 +5,13 @@ import { useNotificationStore } from '@/stores/notifications';
 import PokemonCard from '@/components/pokemon/PokemonCard.vue';
 import ConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 import NoteModal from '@/components/ui/NoteModal.vue';
+import DatePicker from '@/components/ui/DatePicker.vue';
 import { storeToRefs } from 'pinia';
 import { exportPokemonToCSV } from '@/utils/csvExport';
 import { useRouter } from 'vue-router';
+import { pokemonFilters } from '@/utils/pokemonFilters';
+import { pokemonSorting, type SortField, type SortDirection } from '@/utils/pokemonSorting';
+import { type PokemonType, POKEMON_TYPES, type CaughtPokemon } from '@/types/domain';
 
 const store = usePokemonStore();
 const router = useRouter();
@@ -15,6 +19,50 @@ const router = useRouter();
 const notificationStore = useNotificationStore();
 const { caughtPokemon, caughtCount, progress } = storeToRefs(store);
 const { initialize, releasePokemon, updatePokemon } = store;
+
+// Filter & Sort State
+const searchQuery = ref('');
+const selectedType = ref<PokemonType | ''>('');
+const sortField = ref<SortField>('id');
+const sortDirection = ref<SortDirection>('asc');
+const startDate = ref('');
+const endDate = ref('');
+
+const pokemonTypes = POKEMON_TYPES;
+
+// Computed List
+const filteredCaughtPokemon = computed(() => {
+  // 1. Standard Filters (Search & Type)
+  let result = pokemonFilters.filter(caughtPokemon.value, {
+    search: searchQuery.value,
+    type: selectedType.value
+  }) as CaughtPokemon[];
+
+  // 2. Date Filter
+  if (startDate.value) {
+    const parts = startDate.value.split('-').map(Number);
+    if (parts.length === 3) {
+      const start = new Date(parts[0]!, parts[1]! - 1, parts[2]!).getTime();
+      result = result.filter(p => p.caughtAt >= start);
+    }
+  }
+
+  if (endDate.value) {
+    const parts = endDate.value.split('-').map(Number);
+    if (parts.length === 3) {
+      const end = new Date(parts[0]!, parts[1]! - 1, parts[2]!).setHours(23, 59, 59, 999);
+      result = result.filter(p => p.caughtAt <= end);
+    }
+  }
+
+  // 3. Sorting
+  result = pokemonSorting.sort(result, {
+    field: sortField.value,
+    direction: sortDirection.value
+  }) as CaughtPokemon[];
+
+  return result;
+});
 
 // Single release state
 const showConfirmModal = ref(false);
@@ -213,6 +261,41 @@ const confirmModalMessage = computed(() => {
       </button>
     </div>
 
+    <!-- Filter & Sort Controls -->
+    <div class="controls-bar" v-if="caughtCount > 0">
+      <div class="search-box">
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          placeholder="Search by name or ID..."
+        />
+      </div>
+      
+      <div class="filter-group">
+        <select v-model="selectedType">
+          <option value="">All Types</option>
+          <option v-for="type in pokemonTypes" :key="type" :value="type">
+            {{ type.charAt(0).toUpperCase() + type.slice(1) }}
+          </option>
+        </select>
+
+        <select v-model="sortField">
+          <option value="id">Sort by ID</option>
+          <option value="name">Sort by Name</option>
+        </select>
+
+        <select v-model="sortDirection">
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
+
+      <div class="date-filter-group">
+        <DatePicker v-model="startDate" label="Caught From:" />
+        <DatePicker v-model="endDate" label="To:" />
+      </div>
+    </div>
+
     <div v-if="caughtCount === 0" class="empty-state">
       <p>You haven't caught any Pokémon yet!</p>
       <router-link to="/" class="cta-button">Go Catch 'Em All!</router-link>
@@ -220,7 +303,7 @@ const confirmModalMessage = computed(() => {
 
     <div v-else class="pokemon-grid">
       <div 
-        v-for="pokemon in caughtPokemon"
+        v-for="pokemon in filteredCaughtPokemon"
         :key="pokemon.id"
         class="card-wrapper"
         :class="{ 'selected': selectMode && selectedIds.has(pokemon.id) }"
@@ -234,6 +317,11 @@ const confirmModalMessage = computed(() => {
         <!-- Note Indicator if note exists -->
         <div v-if="pokemon.notes" class="note-indicator" title="Has Notes">📝</div>
       </div>
+    </div>
+
+    <div v-if="caughtCount > 0 && filteredCaughtPokemon.length === 0" class="no-results">
+        <p>No Pokémon match your current filters.</p>
+        <button @click="{ searchQuery = ''; selectedType = ''; startDate = ''; endDate = ''; }" class="clear-filters-btn">Clear Filters</button>
     </div>
 
     <!-- Custom Context Menu -->
@@ -308,6 +396,61 @@ const confirmModalMessage = computed(() => {
   flex-wrap: wrap;
 }
 
+/* Controls Bar (Filter & Sort) */
+.controls-bar {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.search-box input {
+  padding: 0 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 250px;
+  font-size: 0.9rem;
+  background-color: white;
+  color: black;
+  height: 36px;
+  line-height: 36px;
+  box-sizing: border-box;
+}
+
+.filter-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-group select {
+  padding: 0 2rem 0 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: black;
+  font-size: 0.9rem;
+  cursor: pointer;
+  height: 36px;
+  line-height: 36px;
+  box-sizing: border-box;
+}
+
+.date-filter-group {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end; /* Align bottom to match inputs */
+    border-left: 1px solid #eee;
+    padding-left: 1rem;
+}
+
+
 .export-btn {
   background-color: #4CAF50;
   color: white;
@@ -323,6 +466,27 @@ const confirmModalMessage = computed(() => {
 
 .export-btn:hover {
   background-color: #45a049;
+}
+
+.clear-filters-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+.clear-filters-btn:hover {
+    background-color: #5a6268;
+}
+
+.no-results {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+    font-size: 1.1rem;
 }
 
 .stat-item {

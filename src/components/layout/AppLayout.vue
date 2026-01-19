@@ -1,15 +1,31 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import OnboardingModal from '../ui/OnboardingModal.vue';
 
 const isOffline = ref(!navigator.onLine);
+const showOnboarding = ref(false);
 
 const updateOnlineStatus = () => {
   isOffline.value = !navigator.onLine;
 };
 
+const closeOnboarding = () => {
+  showOnboarding.value = false;
+  localStorage.setItem('has_seen_onboarding', 'true');
+};
+
 onMounted(() => {
   window.addEventListener('online', updateOnlineStatus);
   window.addEventListener('offline', updateOnlineStatus);
+
+  // Check onboarding status
+  const hasSeen = localStorage.getItem('has_seen_onboarding');
+  if (!hasSeen) {
+    // Small delay to ensure smooth entry after load
+    setTimeout(() => {
+      showOnboarding.value = true;
+    }, 1000);
+  }
 });
 
 onUnmounted(() => {
@@ -41,6 +57,8 @@ onUnmounted(() => {
     <main class="main-content container">
       <slot></slot>
     </main>
+
+    <OnboardingModal :show="showOnboarding" @close="closeOnboarding" />
   </div>
 </template>
 

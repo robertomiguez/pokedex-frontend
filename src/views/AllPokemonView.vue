@@ -83,7 +83,7 @@ onUnmounted(() => {
   document.removeEventListener('click', closeContextMenu);
 });
 
-function handlePokemonClick(event: MouseEvent | any, pokemon: Pokemon) {
+function handlePokemonClick(event: MouseEvent, pokemon: Pokemon) {
   if (contextMenuVisible.value) closeContextMenu();
 
   // Prevent selecting caught pokemon
@@ -283,13 +283,14 @@ async function handleContextAction() {
         @click="handlePokemonClick"
         @contextmenu.prevent="handleRightClick"
       />
-      <!-- PokemonTable not supporting selection/context yet, default click behavior there might just pass pokemon -->
       <PokemonTable 
         v-else-if="viewMode === 'table'"
         :pokemon-list="filteredAndSortedPokemon" 
-        @click="(p) => handlePokemonClick(null, p)"
+        :selected-ids="selectedIds"
+        @click="handlePokemonClick"
         @contextmenu.prevent="handleRightClick"
       />
+
     </div>
 
     <!-- Context Menu -->

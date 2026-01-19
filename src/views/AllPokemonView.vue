@@ -87,19 +87,25 @@ onUnmounted(() => {
   document.removeEventListener('click', closeContextMenu);
 });
 
-function handlePokemonClick(_event: MouseEvent | any, pokemon: Pokemon) {
+function handlePokemonClick(event: MouseEvent | any, pokemon: Pokemon) {
   if (contextMenuVisible.value) closeContextMenu();
 
   // Prevent selecting caught pokemon
   if (isCaught(pokemon.id)) return;
 
-  // Pure Selection Logic - Toggle
-  if (selectedIds.value.has(pokemon.id)) {
-    selectedIds.value.delete(pokemon.id);
+  // Check for Ctrl/Meta key for multi-select
+  if (event.ctrlKey || event.metaKey) {
+    // Toggle selection
+    if (selectedIds.value.has(pokemon.id)) {
+      selectedIds.value.delete(pokemon.id);
+    } else {
+      selectedIds.value.add(pokemon.id);
+    }
+    selectedIds.value = new Set(selectedIds.value); // Trigger reactivity
   } else {
-    selectedIds.value.add(pokemon.id);
+    // Single click: exclusively select this Pokemon
+    selectedIds.value = new Set([pokemon.id]);
   }
-  selectedIds.value = new Set(selectedIds.value); // Trigger reactivity
 }
 
 function handleRightClick(event: MouseEvent | TouchEvent, pokemon: Pokemon) {

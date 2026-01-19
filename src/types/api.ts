@@ -44,3 +44,24 @@ export interface PokemonDetailResponse {
     types: PokemonTypeResponse[];
     stats: PokemonStatResponse[];
 }
+
+export interface PokemonGraphQLItem {
+    id: number;
+    name: string;
+    height: number;
+    weight: number;
+    pokemon_v2_pokemonsprites: {
+        sprites: string;
+    }[];
+    pokemon_v2_pokemontypes: {
+        pokemon_v2_type: {
+            name: string;
+        };
+    }[];
+    pokemon_v2_pokemonstats: {
+        base_stat: number;
+        pokemon_v2_stat: {
+            name: string;
+        };
+    }[];
+}
